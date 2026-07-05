@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<style>
+  html, body { margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:transparent; }
+  #chart-root { width:100%; height:100%; }
+  #html-root { width:100%; height:100%; overflow:auto; box-sizing:border-box; padding:8px; }
+  #error-root { width:100%; height:100%; display:flex; align-items:center; justify-content:center;
+                font-family:'Segoe UI',sans-serif; font-size:12px; color:#F44336; text-align:center; padding:12px; box-sizing:border-box; }
+</style>
+</head>
+<body>
+  <div id="chart-root" style="display:none;"></div>
+  <div id="html-root" style="display:none;"></div>
+  <div id="error-root" style="display:none;"></div>
+
+  <!--
+    echarts.min.js is deployed alongside this file (see ChartHost.cs) so the
+    widget renders fully offline, per the "No AI dependency, everything works
+    offline" product vision. It is NOT fetched from a CDN.
+  -->
+  <script src="echarts.min.js"></script>
+
+  <script>
+    (function () {
+      let chartInstance = null;
+
+      function show(id) {
+        ['chart-root', 'html-root', 'error-root'].forEach(function (elId) {
+          document.getElementById(elId).style.display = (elId === id) ? 'block' : 'none';
+        });
+      }
+
+      /// Called from C# via ExecuteScriptAsync with a JSON-stringified payload.
+      /// payload.kind is one of: "echarts", "html", "error".
+      window.ncvizdashRender = function (payloadJson) {
+        try {
+          var payload = JSON.parse(payloadJson);
+
+          if (payload.kind === 'echarts') {
+            show('chart-root');
+            var root = document.getElementById('chart-root');
+
+            if (!chartInstance) {
+              chartInstance = echarts.init(root, null, { renderer: 'canvas' });
+              window.addEventListener('resize', function () {
+                if (chartInstance) chartInstance.resize();
+              });
+            }
+
+            // notMerge=true guarantees stale series from a previous visual type
+            // are fully replaced rather than merged (important when a widget's
+            // chart type is changed at runtime).
+            chartInstance.setOption(payload.option, true);
+
+            // Wire click-to-cross-filter (Phase 8 consumes this via a registered
+            // WebMessageReceived handler on the host WebView2 control).
+            chartInstance.off('click');
+            chartInstance.on('click', function (params) {
+              if (window.chrome && window.chrome.webview) {
+                window.chrome.webview.postMessage(JSON.stringify({
+                  type: 'chart-click',
+                  seriesName: params.seriesName,
+                  name: params.name,
+                  value: params.value,
+                  dataIndex: params.dataIndex
+                }));
+              }
+            });
+
+          } else if (payload.kind === 'html') {
+            show('html-root');
+            if (chartInstance) { chartInstance.dispose(); chartInstance = null; }
+            document.getElementById('html-root').innerHTML = payload.html;
+
+            // Kick off the KPI count-up animation, if present.
+            var kpiValue = document.querySelector('.kpi-value');
+            if (kpiValue) animateCountUp(kpiValue);
+
+          } else if (payload.kind === 'error') {
+            show('error-root');
+            if (chartInstance) { chartInstance.dispose(); chartInstance = null; }
+            document.getElementById('error-root').textContent = payload.error || 'Unknown rendering error.';
+          }
+        } catch (err) {
+          show('error-root');
+          document.getElementById('error-root').textContent = 'Render error: ' + err.message;
+        }
+      };
+
+      /// Animates a KPI's displayed number from 0 to data-target over ~900ms,
+      /// using the same easing curve as the ECharts "cubicOut" preset so KPI
+      /// and chart animations feel consistent across a dashboard.
+      function animateCountUp(el) {
+        var target = parseFloat(el.getAttribute('data-target'));
+        if (isNaN(target)) return;
+
+        var duration = 900;
+        var startTime = null;
+        var displayText = el.textContent.trim();
+        var suffix = displayText.replace(/[0-9.\-]/g, ''); // "K", "M", etc.
+
+        function cubicOut(t) { return 1 - Math.pow(1 - t, 3); }
+
+        function frame(ts) {
+          if (!startTime) startTime = ts;
+          var progress = Math.min((ts - startTime) / duration, 1);
+          var eased = cubicOut(progress);
+          var current = target * eased;
+
+          el.textContent = formatCompact(current) + (progress >= 1 ? '' : '');
+          if (progress < 1) requestAnimationFrame(frame);
+          else el.textContent = displayText; // land exactly on the pre-formatted string
+        }
+
+        function formatCompact(v) {
+          var abs = Math.abs(v);
+          if (abs >= 1000000) return (v / 1000000).toFixed(1) + 'M';
+          if (abs >= 1000) return (v / 1000).toFixed(1) + 'K';
+          return Number.isInteger(v) ? v.toFixed(0) : v.toFixed(1);
+        }
+
+        requestAnimationFrame(frame);
+      }
+
+      // Signal readiness to the host so ChartHost.cs knows it's safe to call render().
+      if (window.chrome && window.chrome.webview) {
+        window.chrome.webview.postMessage(JSON.stringify({ type: 'host-ready' }));
+      }
+    })();
+  </script>
+</body>
+</html>

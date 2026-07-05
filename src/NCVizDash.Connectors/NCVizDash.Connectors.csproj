@@ -1,0 +1,58 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <LangVersion>12.0</LangVersion>
+    <RootNamespace>NCVizDash.Connectors</RootNamespace>
+    <AssemblyName>NCVizDash.Connectors</AssemblyName>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="System.Text.Json" Version="8.0.5" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.2" />
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="5.2.2" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\NCVizDash.Core\NCVizDash.Core.csproj" />
+    <ProjectReference Include="..\NCVizDash.Models\NCVizDash.Models.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- net48 SDK-style projects don't get System.Net.Http implicitly the way
+         net8+ does. Using the NuGet package form (rather than a plain
+         <Reference Include="System.Net.Http" /> framework reference) since
+         the framework-reference form failed to resolve in practice — the
+         package form is more predictable when other PackageReferences in the
+         same project (e.g. Microsoft.Data.SqlClient) may already pull in a
+         netstandard-compatible System.Net.Http dependency transitively;
+         letting NuGet own version resolution avoids a framework-reference-vs-
+         package-reference identity conflict. -->
+    <PackageReference Include="System.Net.Http" Version="4.3.4" />
+  </ItemGroup>
+  <ItemGroup>
+    <!--
+      Microsoft.Data.SqlClient transitively depends on the standalone
+      "System.ValueTuple" NuGet package (needed for older frameworks that
+      predate .NET Framework 4.7). .NET Framework 4.8's SDK-style reference
+      assemblies (Microsoft.NETFramework.ReferenceAssemblies) are a separate
+      compile-time-only package from the actual runtime mscorlib, and don't
+      reliably expose ValueTuple/ITuple for compilation on their own — so the
+      compile-time (ref) assets of this package are still needed. What must be
+      avoided is the *runtime* copy conflicting with the one the .NET Framework
+      runtime itself provides at execution time. ExcludeAssets="runtime" (not
+      "all") is the correct fix: keep compile-time references available, drop
+      only the runtime DLL, so there is exactly one ValueTuple implementation
+      at runtime (the framework's) and the compiler can still see the types
+      during compilation.
+
+      (An earlier pass here used ExcludeAssets="all", which also strips the
+      compile-time reference assets — that was the wrong exclusion breadth and
+      caused "Predefined type 'System.ValueTuple`2' is not defined" instead of
+      fixing anything. Corrected now.)
+    -->
+    <PackageReference Include="System.ValueTuple" Version="4.5.0">
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </PackageReference>
+  </ItemGroup>
+</Project>

@@ -1,0 +1,64 @@
+<Window x:Class="NCVizDash.TaskPane.Views.PresentationWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:behaviors="clr-namespace:NCVizDash.TaskPane.Behaviors"
+        xmlns:md="http://materialdesigninxaml.net/winfx/xaml/themes"
+        xmlns:ctrl="clr-namespace:NCVizDash.TaskPane.Controls"
+        Title="NC VizDash — Presentation"
+        WindowState="Maximized"
+        WindowStyle="None"
+        Background="#0D0D0D"
+        KeyDown="Window_KeyDown">
+
+    <!-- Story Mode: full-screen, no editing chrome — just the canvas plus a
+         minimal, auto-hiding navigation bar. Smooth transitions are handled by
+         the DoubleAnimation triggered on page change in the code-behind, cross-
+         fading the canvas host between bookmark applications. -->
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="56" />
+        </Grid.RowDefinitions>
+
+        <!-- Canvas host — hosts the SAME DashboardCanvas instance as the editing
+             view (re-parented for the duration of the presentation), so no data
+             or widget state is duplicated. Editing gestures are disabled via
+             DashboardCanvas.IsHitTestVisible bound to (not) IsActive. -->
+        <Border x:Name="CanvasHostBorder" Grid.Row="0" Background="Transparent" Opacity="1">
+            <Border.RenderTransform>
+                <ScaleTransform x:Name="FadeScale" ScaleX="1" ScaleY="1" />
+            </Border.RenderTransform>
+        </Border>
+
+        <!-- Minimal navigation bar -->
+        <Border Grid.Row="1" Background="#1A1A1A" Opacity="0.9">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" behaviors:SpacingBehavior.Spacing="16">
+                <Button x:Name="PreviousButton" Click="PreviousButton_Click"
+                        Style="{StaticResource MaterialDesignIconButton}"
+                        Foreground="White" ToolTip="Previous (←)">
+                    <md:PackIcon Kind="ChevronLeft" Width="28" Height="28" />
+                </Button>
+
+                <TextBlock x:Name="PageIndicator" Foreground="White" VerticalAlignment="Center" FontSize="14" />
+
+                <Button x:Name="PlayPauseButton" Click="PlayPauseButton_Click"
+                        Style="{StaticResource MaterialDesignIconButton}"
+                        Foreground="White" ToolTip="Play / Pause auto-advance (Space)">
+                    <md:PackIcon x:Name="PlayPauseIcon" Kind="Play" Width="24" Height="24" />
+                </Button>
+
+                <Button x:Name="NextButton" Click="NextButton_Click"
+                        Style="{StaticResource MaterialDesignIconButton}"
+                        Foreground="White" ToolTip="Next (→)">
+                    <md:PackIcon Kind="ChevronRight" Width="28" Height="28" />
+                </Button>
+
+                <Button x:Name="ExitButton" Click="ExitButton_Click"
+                        Style="{StaticResource MaterialDesignIconButton}"
+                        Foreground="White" ToolTip="Exit (Esc)" Margin="24,0,0,0">
+                    <md:PackIcon Kind="Close" Width="24" Height="24" />
+                </Button>
+            </StackPanel>
+        </Border>
+    </Grid>
+</Window>

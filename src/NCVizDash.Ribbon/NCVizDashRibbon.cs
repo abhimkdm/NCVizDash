@@ -1,0 +1,196 @@
+using System.IO;
+using System.Reflection;
+using System.Runtime.InteropServices;
+using Microsoft.Extensions.Logging;
+using Microsoft.Office.Core;
+using NCVizDash.Core.Abstractions;
+
+// Alias to avoid ambiguity with System.Reflection.Assembly
+using OfficeCore = Microsoft.Office.Core;
+
+namespace NCVizDash.Ribbon;
+
+/// <summary>
+/// Implements the Excel ribbon callbacks defined in NCVizDashRibbon.xml.
+/// Registered as <see cref="IRibbonExtensibility"/> by the add-in host.
+/// </summary>
+[ComVisible(true)]
+public sealed class NCVizDashRibbon : IRibbonExtensibility
+{
+    // ── Fields ──────────────────────────────────────────────────────────────
+    private IRibbonUI? _ribbon;
+    private bool _taskPaneVisible;
+
+    private readonly ILogger<NCVizDashRibbon> _logger;
+
+    /// <summary>Raised when the user requests the task pane visibility to change.</summary>
+    public event EventHandler<bool>? TaskPaneToggleRequested;
+
+    /// <summary>Raised when the user requests a full data refresh.</summary>
+    public event EventHandler? DataRefreshRequested;
+
+    /// <summary>Raised when the user requests a brand-new dashboard.</summary>
+    public event EventHandler? NewDashboardRequested;
+
+    /// <summary>Raised when the user requests the Open Dashboard picker.</summary>
+    public event EventHandler? OpenDashboardRequested;
+
+    /// <summary>Raised when the user requests the active dashboard be saved.</summary>
+    public event EventHandler? SaveDashboardRequested;
+
+    /// <summary>Raised when the user changes the active theme.</summary>
+    public event EventHandler<string>? ThemeChangeRequested;
+
+    // ── Constructor ──────────────────────────────────────────────────────────
+
+    /// <summary>Initialises the ribbon with required services.</summary>
+    public NCVizDashRibbon(ILogger<NCVizDashRibbon> logger)
+    {
+        _logger = logger;
+    }
+
+    // ── IRibbonExtensibility ─────────────────────────────────────────────────
+
+    /// <inheritdoc/>
+    public string GetCustomUI(string ribbonId)
+    {
+        _logger.LogDebug("GetCustomUI called for ribbon '{RibbonId}'", ribbonId);
+
+        var asm = Assembly.GetExecutingAssembly();
+        // Embedded resource name follows: <AssemblyName>.<FolderPath>.<FileName>
+        const string resourceName = "NCVizDash.Ribbon.NCVizDashRibbon.xml";
+
+        using var stream = asm.GetManifestResourceStream(resourceName);
+        if (stream is null)
+        {
+            _logger.LogError("Ribbon XML resource '{Resource}' not found in assembly.", resourceName);
+            return string.Empty;
+        }
+
+        using var reader = new StreamReader(stream);
+        return reader.ReadToEnd();
+    }
+
+    // ── Ribbon lifecycle ──────────────────────────────────────────────────────
+
+    /// <summary>Called by Excel once the ribbon is loaded.</summary>
+    public void Ribbon_OnLoad(IRibbonUI ribbon)
+    {
+        _ribbon = ribbon;
+        _logger.LogInformation("NC VizDash ribbon loaded successfully.");
+    }
+
+    // ── Button callbacks ──────────────────────────────────────────────────────
+
+    /// <summary>New Dashboard button.</summary>
+    public void BtnNewDashboard_Click(IRibbonControl control)
+    {
+        _logger.LogInformation("User requested: New Dashboard.");
+        NewDashboardRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>Open Dashboard button.</summary>
+    public void BtnOpenDashboard_Click(IRibbonControl control)
+    {
+        _logger.LogInformation("User requested: Open Dashboard.");
+        OpenDashboardRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>Save Dashboard button.</summary>
+    public void BtnSaveDashboard_Click(IRibbonControl control)
+    {
+        _logger.LogInformation("User requested: Save Dashboard.");
+        SaveDashboardRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>Templates button.</summary>
+    public void BtnTemplates_Click(IRibbonControl control)
+    {
+        _logger.LogInformation("User requested: Templates.");
+    }
+
+    /// <summary>Refresh Data button.</summary>
+    public void BtnRefreshData_Click(IRibbonControl control)
+    {
+        _logger.LogInformation("User requested: Refresh Data.");
+        DataRefreshRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>Data Sources button.</summary>
+    public void BtnDataSources_Click(IRibbonControl control)
+    {
+        _logger.LogInformation("User requested: Data Sources.");
+    }
+
+    /// <summary>Toggle Task Pane button.</summary>
+    public void BtnToggleTaskPane_Click(IRibbonControl control, bool pressed)
+    {
+        _taskPaneVisible = pressed;
+        _logger.LogInformation("Task pane visibility toggled: {Visible}", pressed);
+        TaskPaneToggleRequested?.Invoke(this, pressed);
+    }
+
+    /// <summary>Returns whether the task pane is currently visible (drives toggle state).</summary>
+    public bool BtnToggleTaskPane_GetPressed(IRibbonControl control) => _taskPaneVisible;
+
+    /// <summary>Theme combo-box change.</summary>
+    public void CmbTheme_Change(IRibbonControl control, string text)
+    {
+        _logger.LogInformation("Theme changed to '{Theme}'.", text);
+        ThemeChangeRequested?.Invoke(this, text);
+    }
+
+    // ── Export callbacks ──────────────────────────────────────────────────────
+
+    /// <summary>Export → PDF.</summary>
+    public void BtnExportPdf_Click(IRibbonControl control)
+    {
+        _logger.LogInformation("User requested: Export PDF.");
+    }
+
+    /// <summary>Export → PowerPoint.</summary>
+    public void BtnExportPptx_Click(IRibbonControl control)
+    {
+        _logger.LogInformation("User requested: Export PowerPoint.");
+    }
+
+    /// <summary>Export → PNG.</summary>
+    public void BtnExportPng_Click(IRibbonControl control)
+    {
+        _logger.LogInformation("User requested: Export PNG.");
+    }
+
+    /// <summary>Export → Excel Snapshot.</summary>
+    public void BtnExportSnapshot_Click(IRibbonControl control)
+    {
+        _logger.LogInformation("User requested: Export Excel Snapshot.");
+    }
+
+    // ── Help ──────────────────────────────────────────────────────────────────
+
+    /// <summary>About button.</summary>
+    public void BtnAbout_Click(IRibbonControl control)
+    {
+        _logger.LogInformation("User opened About dialog.");
+
+        // WinForms' MessageBox, not WPF's — this project references
+        // System.Windows.Forms (UseWindowsForms) but not System.Windows/WPF
+        // (UseWPF), so System.Windows.Forms.MessageBox is what's actually
+        // available here. There's no reason to pull WPF into the Ribbon
+        // project just for a simple About dialog.
+        System.Windows.Forms.MessageBox.Show(
+            "NC VizDash\nVersion 1.0.0 – Phase 1\n\n" +
+            "Enterprise Business Intelligence for Microsoft Excel.\n\n" +
+            "© NC VizDash Contributors",
+            "About NC VizDash",
+            System.Windows.Forms.MessageBoxButtons.OK,
+            System.Windows.Forms.MessageBoxIcon.Information);
+    }
+
+    /// <summary>
+    /// Notifies Excel to repaint the ribbon toggle button pressed state.
+    /// Call this whenever <see cref="_taskPaneVisible"/> changes externally.
+    /// </summary>
+    public void InvalidateTaskPaneButton() =>
+        _ribbon?.InvalidateControl("btnToggleTaskPane");
+}

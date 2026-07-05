@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <LangVersion>12.0</LangVersion>
+    <RootNamespace>NCVizDash.RuleEngine</RootNamespace>
+    <AssemblyName>NCVizDash.RuleEngine</AssemblyName>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\NCVizDash.Core\NCVizDash.Core.csproj" />
+    <ProjectReference Include="..\NCVizDash.Models\NCVizDash.Models.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  NCVizDash Ribbon XML
+  Defines the "NC VizDash" tab that appears in the Excel ribbon.
+  Callbacks are handled by NCVizDashRibbon (IRibbonExtensibility).
+-->
+<customUI xmlns="http://schemas.microsoft.com/office/2009/07/customui"
+          onLoad="Ribbon_OnLoad">
+
+  <ribbon>
+    <tabs>
+      <tab id="tabNCVizDash" label="NC VizDash" insertAfterMso="TabView">
+
+        <!-- ── Dashboard group ── -->
+        <group id="grpDashboard" label="Dashboard">
+          <button id="btnNewDashboard"
+                  label="New Dashboard"
+                  screentip="Create a new blank dashboard"
+                  supertip="Opens the dashboard designer with an empty canvas."
+                  imageMso="ChartInsert"
+                  size="large"
+                  onAction="BtnNewDashboard_Click" />
+
+          <button id="btnOpenDashboard"
+                  label="Open"
+                  screentip="Open a saved dashboard"
+                  supertip="Browse dashboards saved in this workbook."
+                  imageMso="FileOpen"
+                  size="normal"
+                  onAction="BtnOpenDashboard_Click" />
+
+          <button id="btnSaveDashboard"
+                  label="Save"
+                  screentip="Save the current dashboard"
+                  supertip="Saves widget layout, filters, and settings into the workbook."
+                  imageMso="FileSave"
+                  size="normal"
+                  onAction="BtnSaveDashboard_Click" />
+
+          <menuSeparator id="sepDashboard" />
+
+          <button id="btnTemplates"
+                  label="Templates"
+                  screentip="Browse dashboard templates"
+                  supertip="Pick a pre-built template to get started in seconds."
+                  imageMso="TemplatePublish"
+                  size="normal"
+                  onAction="BtnTemplates_Click" />
+        </group>
+
+        <!-- ── Data group ── -->
+        <group id="grpData" label="Data">
+          <button id="btnRefreshData"
+                  label="Refresh"
+                  screentip="Refresh all data sources"
+                  supertip="Re-reads all Excel tables and named ranges into the analytics engine."
+                  imageMso="RefreshAll"
+                  size="large"
+                  onAction="BtnRefreshData_Click" />
+
+          <button id="btnDataSources"
+                  label="Data Sources"
+                  screentip="Manage external data sources"
+                  supertip="Connect to SQL Server, CSV, REST APIs, and more."
+                  imageMso="DataConnectionProperties"
+                  size="normal"
+                  onAction="BtnDataSources_Click" />
+        </group>
+
+        <!-- ── View group ── -->
+        <group id="grpView" label="View">
+          <toggleButton id="btnToggleTaskPane"
+                        label="Task Pane"
+                        screentip="Show or hide the NC VizDash task pane"
+                        supertip="Toggles the field explorer, canvas, and visual library."
+                        imageMso="TaskPaneInsert"
+                        size="large"
+                        onAction="BtnToggleTaskPane_Click"
+                        getPressed="BtnToggleTaskPane_GetPressed" />
+
+          <comboBox id="cmbTheme"
+                    label="Theme"
+                    screentip="Switch between Light and Dark themes"
+                    supertip="Changes the dashboard colour theme."
+                    onChange="CmbTheme_Change"
+                    showItemImage="false">
+            <item id="themeLight" label="Light" />
+            <item id="themeDark"  label="Dark"  />
+          </comboBox>
+        </group>
+
+        <!-- ── Export group ── -->
+        <group id="grpExport" label="Export">
+          <splitButton id="splitExport" size="large">
+            <button id="btnExportPDF"
+                    label="Export PDF"
+                    imageMso="SaveAsPDF"
+                    onAction="BtnExportPdf_Click" />
+            <menu id="mnuExport" itemSize="normal">
+              <button id="btnExportPptx"
+                      label="PowerPoint"
+                      imageMso="PresentationCreate"
+                      onAction="BtnExportPptx_Click" />
+              <button id="btnExportPng"
+                      label="Image (PNG)"
+                      imageMso="PictureInsert"
+                      onAction="BtnExportPng_Click" />
+              <button id="btnExportSnapshot"
+                      label="Excel Snapshot"
+                      imageMso="FileSaveAs"
+                      onAction="BtnExportSnapshot_Click" />
+            </menu>
+          </splitButton>
+        </group>
+
+        <!-- ── Help group ── -->
+        <group id="grpHelp" label="Help">
+          <button id="btnAbout"
+                  label="About"
+                  screentip="About NC VizDash"
+                  supertip="Version information and licence details."
+                  imageMso="Help"
+                  size="normal"
+                  onAction="BtnAbout_Click" />
+        </group>
+
+      </tab>
+    </tabs>
+  </ribbon>
+</customUI>

@@ -1,0 +1,6 @@
+<Project>
+	<PropertyGroup>
+	<!-- Ensure modern C# features (nullable, file-scoped namespaces, collection expressions) are available when targeting older TFMs -->
+	<LangVersion>12.0</LangVersion>
+  </PropertyGroup>
+</Project>

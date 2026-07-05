@@ -1,0 +1,76 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <LangVersion>12.0</LangVersion>
+    <RootNamespace>NCVizDash.ExcelAddIn</RootNamespace>
+    <AssemblyName>NCVizDash.ExcelAddIn</AssemblyName>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <!--
+      VSTO add-in output type.
+      The VSTO installer / ClickOnce deployment handles registration.
+    -->
+    <OutputType>Library</OutputType>
+    <StartupObject />
+  </PropertyGroup>
+  <ItemGroup>
+    <COMReference Include="Microsoft.Office.Core">
+      <WrapperTool>tlbimp</WrapperTool>
+      <VersionMinor>8</VersionMinor>
+      <VersionMajor>2</VersionMajor>
+      <Guid>2df8d04c-5bfa-101b-bde5-00aa0044de52</Guid>
+      <Lcid>0</Lcid>
+      <Isolated>false</Isolated>
+      <EmbedInteropTypes>true</EmbedInteropTypes>
+    </COMReference>
+  </ItemGroup>
+  <ItemGroup>
+    <!-- VSTO Runtime -->
+    <PackageReference Include="Microsoft.Office.Interop.Excel" Version="15.0.4795.1000" />
+    <!-- Microsoft.Vbe.Interop is not published on nuget.org (it ships only via the
+         Office PIA install / a COM reference to "Microsoft Visual Basic for
+         Applications Extensibility"), and nothing in this codebase actually uses
+         VBE/VBA interop — removed rather than replaced. If VBA project inspection
+         is ever needed, add it as a COM reference the same way Office core was
+         added in NCVizDash.Ribbon/Persistence, not as a PackageReference. -->
+    <!-- DI container -->
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.1" />
+    <!-- Logging -->
+    <PackageReference Include="Serilog" Version="4.1.0" />
+    <PackageReference Include="Serilog.Extensions.Logging" Version="8.0.0" />
+    <PackageReference Include="Serilog.Sinks.File" Version="6.0.0" />
+    <PackageReference Include="Serilog.Sinks.Debug" Version="3.0.0" />
+    <PackageReference Include="Serilog.Enrichers.Thread" Version="4.0.0" />
+    <PackageReference Include="Serilog.Enrichers.Environment" Version="3.0.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\NCVizDash.Core\NCVizDash.Core.csproj" />
+    <ProjectReference Include="..\NCVizDash.Infrastructure\NCVizDash.Infrastructure.csproj" />
+    <ProjectReference Include="..\NCVizDash.Models\NCVizDash.Models.csproj" />
+    <ProjectReference Include="..\NCVizDash.Ribbon\NCVizDash.Ribbon.csproj" />
+    <ProjectReference Include="..\NCVizDash.TaskPane\NCVizDash.TaskPane.csproj" />
+    <!-- Phase 2+ projects (stubs referenced now, filled in later) -->
+    <ProjectReference Include="..\NCVizDash.DuckDB\NCVizDash.DuckDB.csproj" />
+    <ProjectReference Include="..\NCVizDash.Persistence\NCVizDash.Persistence.csproj" />
+    <ProjectReference Include="..\NCVizDash.RuleEngine\NCVizDash.RuleEngine.csproj" />
+    <ProjectReference Include="..\NCVizDash.ChartEngine\NCVizDash.ChartEngine.csproj" />
+    <ProjectReference Include="..\NCVizDash.Connectors\NCVizDash.Connectors.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- net48 SDK-style projects don't get System.Net.Http implicitly the way
+         net8+ does. Using the NuGet package form (rather than a plain
+         <Reference Include="System.Net.Http" /> framework reference) since
+         the framework-reference form failed to resolve in practice — the
+         package form is more predictable when other PackageReferences in the
+         same project (e.g. Microsoft.Data.SqlClient) may already pull in a
+         netstandard-compatible System.Net.Http dependency transitively;
+         letting NuGet own version resolution avoids a framework-reference-vs-
+         package-reference identity conflict. -->
+    <PackageReference Include="System.Net.Http" Version="4.3.4" />
+  </ItemGroup>
+</Project>

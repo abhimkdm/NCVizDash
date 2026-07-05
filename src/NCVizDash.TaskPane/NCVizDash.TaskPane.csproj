@@ -1,0 +1,52 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <LangVersion>12.0</LangVersion>
+    <RootNamespace>NCVizDash.TaskPane</RootNamespace>
+    <AssemblyName>NCVizDash.TaskPane</AssemblyName>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="MaterialDesignThemes" Version="5.1.0" />
+    <PackageReference Include="MaterialDesignColors" Version="3.1.0" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2739.15" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.2" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.2" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.1" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.3.2" />
+    <PackageReference Include="DocumentFormat.OpenXml" Version="3.1.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\NCVizDash.Core\NCVizDash.Core.csproj" />
+    <ProjectReference Include="..\NCVizDash.Models\NCVizDash.Models.csproj" />
+    <ProjectReference Include="..\NCVizDash.ChartEngine\NCVizDash.ChartEngine.csproj" />
+    <ProjectReference Include="..\NCVizDash.Connectors\NCVizDash.Connectors.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Assets\chart-host.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>Assets\ChartHost\chart-host.html</Link>
+    </Content>
+    <Content Include="Assets\echarts.min.js" Condition="Exists('Assets\echarts.min.js')">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>Assets\ChartHost\echarts.min.js</Link>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <!-- net48 SDK-style projects don't get System.Net.Http implicitly the way
+         net8+ does. Using the NuGet package form (rather than a plain
+         <Reference Include="System.Net.Http" /> framework reference) since
+         the framework-reference form failed to resolve in practice — the
+         package form is more predictable when other PackageReferences in the
+         same project (e.g. Microsoft.Data.SqlClient) may already pull in a
+         netstandard-compatible System.Net.Http dependency transitively;
+         letting NuGet own version resolution avoids a framework-reference-vs-
+         package-reference identity conflict. -->
+    <PackageReference Include="System.Net.Http" Version="4.3.4" />
+  </ItemGroup>
+</Project>
