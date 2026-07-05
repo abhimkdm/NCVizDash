@@ -347,7 +347,7 @@ public sealed class Phase5RuleEngineTests
     [Fact]
     public void RuleRegistry_LastRule_IsTableFallback()
     {
-        var last = RuleRegistry.All[^1];
+        var last = RuleRegistry.All[RuleRegistry.All.Count - 1];
         Assert.Equal("TABLE_FALLBACK", last.Name);
         Assert.Equal(VisualType.Table, last.RecommendedVisual);
     }

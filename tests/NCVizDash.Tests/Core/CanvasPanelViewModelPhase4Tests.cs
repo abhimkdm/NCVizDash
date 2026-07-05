@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging.Abstractions;
 using NCVizDash.Models;
+using NCVizDash.TaskPane.Geometry;
 using NCVizDash.TaskPane.ViewModels;
 using Xunit;
 

@@ -36,11 +36,13 @@ public sealed partial class PresentationController : ObservableObject
     /// <summary>The ordered bookmark sequence for the active presentation.</summary>
     public ObservableCollection<Bookmark> Pages { get; } = [];
 
+    /// <summary>The bookmark for the current presentation page, if any.</summary>
     public Bookmark? CurrentPage => CurrentPageIndex >= 0 && CurrentPageIndex < Pages.Count ? Pages[CurrentPageIndex] : null;
 
     /// <summary>Raised when the current page changes — the canvas/global-filter-bound UI subscribes to this to apply the new bookmark.</summary>
     public event EventHandler<Bookmark>? PageChanged;
 
+    /// <summary>Initialises the presentation controller with a logger and bookmark manager.</summary>
     public PresentationController(ILogger<PresentationController> logger, TaskPane.Services.BookmarkManager bookmarkManager)
     {
         _logger = logger;

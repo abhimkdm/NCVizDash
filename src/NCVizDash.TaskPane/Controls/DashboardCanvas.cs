@@ -422,6 +422,7 @@ public sealed class DashboardCanvas : System.Windows.Controls.Panel
         DependencyProperty.Register(nameof(RenderCoordinator), typeof(Services.WidgetRenderCoordinator),
             typeof(DashboardCanvas), new PropertyMetadata(null));
 
+    /// <summary>Gets or sets the widget render coordinator for chart rendering.</summary>
     public Services.WidgetRenderCoordinator? RenderCoordinator
     {
         get => (Services.WidgetRenderCoordinator?)GetValue(RenderCoordinatorProperty);
@@ -433,6 +434,7 @@ public sealed class DashboardCanvas : System.Windows.Controls.Panel
         DependencyProperty.Register(nameof(Theme), typeof(string),
             typeof(DashboardCanvas), new PropertyMetadata("Light", OnThemeChanged));
 
+    /// <summary>Gets or sets the active chart theme name.</summary>
     public string Theme
     {
         get => (string)GetValue(ThemeProperty);
@@ -449,6 +451,7 @@ public sealed class DashboardCanvas : System.Windows.Controls.Panel
         DependencyProperty.Register(nameof(FilterManager), typeof(Core.Abstractions.IFilterManager),
             typeof(DashboardCanvas), new PropertyMetadata(null, OnFilterManagerChanged));
 
+    /// <summary>Gets or sets the cross-filter manager for linked widget filtering.</summary>
     public Core.Abstractions.IFilterManager? FilterManager
     {
         get => (Core.Abstractions.IFilterManager?)GetValue(FilterManagerProperty);
@@ -465,6 +468,7 @@ public sealed class DashboardCanvas : System.Windows.Controls.Panel
         DependencyProperty.Register(nameof(GlobalFilterManager), typeof(Core.Abstractions.IGlobalFilterManager),
             typeof(DashboardCanvas), new PropertyMetadata(null, OnGlobalFilterManagerChanged));
 
+    /// <summary>Gets or sets the global filter manager for dashboard-wide filters.</summary>
     public Core.Abstractions.IGlobalFilterManager? GlobalFilterManager
     {
         get => (Core.Abstractions.IGlobalFilterManager?)GetValue(GlobalFilterManagerProperty);

@@ -3,7 +3,13 @@ using NCVizDash.Models;
 namespace NCVizDash.TaskPane.Geometry;
 
 /// <summary>Orientation of a detected alignment guide line.</summary>
-public enum GuideOrientation { Vertical, Horizontal }
+public enum GuideOrientation
+{
+    /// <summary>Vertical alignment guide.</summary>
+    Vertical,
+    /// <summary>Horizontal alignment guide.</summary>
+    Horizontal
+}
 
 /// <summary>
 /// A single alignment guide: a line at <see cref="GridPosition"/> (in grid units)
@@ -39,7 +45,7 @@ public static class GridGeometryHelper
     /// <summary>
     /// Clamps a proposed new column/row so the widget never moves fully off the
     /// (optionally bounded) grid. Negative positions are clamped to zero; if
-    /// <paramref name="gridColumns"/> is provided, the widget is also kept from
+    /// <paramref name="gridBound"/> is provided, the widget is also kept from
     /// running past the right edge.
     /// </summary>
     public static int ClampPosition(int proposed, int span, int? gridBound = null)

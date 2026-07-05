@@ -20,6 +20,7 @@ public sealed class DrillManager
     private readonly ILogger<DrillManager> _logger;
     private readonly Dictionary<Guid, Stack<DrillLevel>> _stacksByWidget = new();
 
+    /// <summary>Initialises the drill manager with a logger.</summary>
     public DrillManager(ILogger<DrillManager> logger)
     {
         _logger = logger;

@@ -16,6 +16,7 @@ public sealed class OneClickDashboardGenerator
     private readonly ILogger<OneClickDashboardGenerator> _logger;
     private const int GridColumns = 24;
 
+    /// <summary>Initialises the one-click dashboard generator with a logger.</summary>
     public OneClickDashboardGenerator(ILogger<OneClickDashboardGenerator> logger)
     {
         _logger = logger;

@@ -175,7 +175,7 @@ public sealed class Phase10Through18Tests
     public async Task CsvFileConnector_DiscoverAndRead_RoundTrips()
     {
         var tempFile = Path.GetTempFileName();
-        await File.WriteAllTextAsync(tempFile, "Name,Revenue\nAcme,100\n\"Smith, Co\",200\n");
+        File.WriteAllText(tempFile, "Name,Revenue\nAcme,100\n\"Smith, Co\",200\n");
 
         try
         {
@@ -199,7 +199,7 @@ public sealed class Phase10Through18Tests
     public async Task JsonFileConnector_DiscoverAndRead_RoundTrips()
     {
         var tempFile = Path.GetTempFileName();
-        await File.WriteAllTextAsync(tempFile, """[{"name":"Acme","revenue":100},{"name":"Beta","revenue":200}]""");
+        File.WriteAllText(tempFile, """[{"name":"Acme","revenue":100},{"name":"Beta","revenue":200}]""");
 
         try
         {

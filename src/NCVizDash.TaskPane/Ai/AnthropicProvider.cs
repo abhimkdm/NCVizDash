@@ -16,8 +16,10 @@ public sealed class AnthropicProvider : IAiProvider
 
     private const string Endpoint = "https://api.anthropic.com/v1/messages";
 
+    /// <inheritdoc/>
     public string ProviderId => "anthropic";
 
+    /// <summary>Initialises the Anthropic provider with HTTP client, settings, and a logger.</summary>
     public AnthropicProvider(HttpClient httpClient, IAppSettingsProvider settings, ILogger<AnthropicProvider> logger)
     {
         _httpClient = httpClient;
@@ -25,6 +27,7 @@ public sealed class AnthropicProvider : IAiProvider
         _logger = logger;
     }
 
+    /// <inheritdoc/>
     public async Task<string> ExplainChartAsync(
         DashboardWidget widget, IReadOnlyList<IReadOnlyDictionary<string, object?>> rows, CancellationToken ct = default)
     {
@@ -34,6 +37,7 @@ public sealed class AnthropicProvider : IAiProvider
         return await CompleteAsync(prompt, ct);
     }
 
+    /// <inheritdoc/>
     public Task<IReadOnlyList<DashboardWidget>> SuggestWidgetsAsync(
         string prompt, DataSourceDescriptor dataSource, CancellationToken ct = default)
     {
@@ -41,6 +45,7 @@ public sealed class AnthropicProvider : IAiProvider
         return Task.FromResult<IReadOnlyList<DashboardWidget>>([]);
     }
 
+    /// <inheritdoc/>
     public async Task<string> GenerateInsightsAsync(Dashboard dashboard, CancellationToken ct = default)
     {
         var widgetSummary = string.Join("; ", dashboard.Widgets.Select(w => $"{w.Title} ({w.VisualType})"));
@@ -49,6 +54,7 @@ public sealed class AnthropicProvider : IAiProvider
         return await CompleteAsync(prompt, ct);
     }
 
+    /// <inheritdoc/>
     public Task<IReadOnlyList<double>> ForecastAsync(IReadOnlyList<double> historicalValues, int periodsAhead, CancellationToken ct = default)
     {
         // Same deterministic linear-trend approach as the OpenAI-compatible providers —

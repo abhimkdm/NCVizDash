@@ -6,6 +6,7 @@ using NCVizDash.TaskPane.Generation;
 using NCVizDash.TaskPane.Presentation;
 using NCVizDash.TaskPane.Services;
 using NCVizDash.TaskPane.Templates;
+using NCVizDash.TaskPane.ViewModels;
 using Xunit;
 
 namespace NCVizDash.Tests.Core;

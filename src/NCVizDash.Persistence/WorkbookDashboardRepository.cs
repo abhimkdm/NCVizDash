@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Xml.Linq;
 using Microsoft.Extensions.Logging;
+using Microsoft.Office.Core;
 using Microsoft.Office.Interop.Excel;
 using NCVizDash.Core.Abstractions;
 using NCVizDash.Models;

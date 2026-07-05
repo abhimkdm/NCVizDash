@@ -13,12 +13,15 @@ namespace NCVizDash.TaskPane.Behaviors;
 /// </summary>
 public static class SpacingBehavior
 {
+    /// <summary>Attached property that sets uniform spacing between panel children.</summary>
     public static readonly DependencyProperty SpacingProperty =
         DependencyProperty.RegisterAttached(
             "Spacing", typeof(double), typeof(SpacingBehavior),
             new PropertyMetadata(0d, OnSpacingChanged));
 
+    /// <summary>Gets the spacing value for the specified panel.</summary>
     public static double GetSpacing(DependencyObject obj) => (double)obj.GetValue(SpacingProperty);
+    /// <summary>Sets the spacing value for the specified panel.</summary>
     public static void SetSpacing(DependencyObject obj, double value) => obj.SetValue(SpacingProperty, value);
 
     private static void OnSpacingChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)

@@ -1,4 +1,6 @@
+using System.IO;
 using Microsoft.Extensions.Logging;
+using Microsoft.Office.Core;
 using Microsoft.Office.Interop.Excel;
 
 namespace NCVizDash.ExcelAddIn.DataAccess;
@@ -15,6 +17,7 @@ public sealed class ExcelSnapshotExporter
     private readonly Microsoft.Office.Interop.Excel.Application _excelApp;
     private readonly ILogger<ExcelSnapshotExporter> _logger;
 
+    /// <summary>Initialises the exporter against the live Excel Application object.</summary>
     public ExcelSnapshotExporter(Microsoft.Office.Interop.Excel.Application excelApp, ILogger<ExcelSnapshotExporter> logger)
     {
         _excelApp = excelApp;

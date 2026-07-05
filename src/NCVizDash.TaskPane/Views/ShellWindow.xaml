@@ -20,8 +20,7 @@
     <Window.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <md:BundledTheme x:Name="BundledThemeDictionary"
-                                 BaseTheme="Light"
+                <md:BundledTheme BaseTheme="Light"
                                  PrimaryColor="DeepPurple"
                                  SecondaryColor="Teal" />
                 <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesign3.Defaults.xaml" />

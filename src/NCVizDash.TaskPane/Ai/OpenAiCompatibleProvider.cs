@@ -16,14 +16,21 @@ namespace NCVizDash.TaskPane.Ai;
 /// </summary>
 public abstract class OpenAiCompatibleProvider : IAiProvider
 {
+    /// <summary>HTTP client used for chat-completions requests.</summary>
     protected readonly HttpClient HttpClient;
+    /// <summary>Application settings (API keys, endpoints).</summary>
     protected readonly IAppSettingsProvider Settings;
+    /// <summary>Logger for this provider instance.</summary>
     protected readonly ILogger Logger;
 
+    /// <inheritdoc/>
     public abstract string ProviderId { get; }
+    /// <summary>Chat-completions endpoint URL for this provider.</summary>
     protected abstract string Endpoint { get; }
+    /// <summary>Applies provider-specific authentication headers to the request.</summary>
     protected abstract void ApplyAuth(HttpRequestMessage request);
 
+    /// <summary>Initialises the provider with HTTP client, settings, and a logger.</summary>
     protected OpenAiCompatibleProvider(HttpClient httpClient, IAppSettingsProvider settings, ILogger logger)
     {
         HttpClient = httpClient;
@@ -31,6 +38,7 @@ public abstract class OpenAiCompatibleProvider : IAiProvider
         Logger = logger;
     }
 
+    /// <inheritdoc/>
     public async Task<string> ExplainChartAsync(
         DashboardWidget widget, IReadOnlyList<IReadOnlyDictionary<string, object?>> rows, CancellationToken ct = default)
     {
@@ -41,6 +49,7 @@ public abstract class OpenAiCompatibleProvider : IAiProvider
         return await CompleteAsync(prompt, ct);
     }
 
+    /// <inheritdoc/>
     public async Task<IReadOnlyList<DashboardWidget>> SuggestWidgetsAsync(
         string prompt, DataSourceDescriptor dataSource, CancellationToken ct = default)
     {
@@ -53,6 +62,7 @@ public abstract class OpenAiCompatibleProvider : IAiProvider
         return await Task.FromResult<IReadOnlyList<DashboardWidget>>([]);
     }
 
+    /// <inheritdoc/>
     public async Task<string> GenerateInsightsAsync(Dashboard dashboard, CancellationToken ct = default)
     {
         var widgetSummary = string.Join("; ", dashboard.Widgets.Select(w => $"{w.Title} ({w.VisualType})"));
@@ -62,6 +72,7 @@ public abstract class OpenAiCompatibleProvider : IAiProvider
         return await CompleteAsync(prompt, ct);
     }
 
+    /// <inheritdoc/>
     public Task<IReadOnlyList<double>> ForecastAsync(IReadOnlyList<double> historicalValues, int periodsAhead, CancellationToken ct = default)
     {
         // Simple, deterministic linear-trend forecast — no LLM call needed for numeric
@@ -83,6 +94,7 @@ public abstract class OpenAiCompatibleProvider : IAiProvider
         return Task.FromResult<IReadOnlyList<double>>(forecast);
     }
 
+    /// <summary>Sends a single user prompt to the chat-completions endpoint and returns the model text.</summary>
     protected async Task<string> CompleteAsync(string prompt, CancellationToken ct)
     {
         var requestBody = JsonSerializer.Serialize(new
@@ -118,8 +130,11 @@ public abstract class OpenAiCompatibleProvider : IAiProvider
 public sealed class OpenAiProvider(HttpClient httpClient, IAppSettingsProvider settings, ILogger<OpenAiProvider> logger)
     : OpenAiCompatibleProvider(httpClient, settings, logger)
 {
+    /// <inheritdoc/>
     public override string ProviderId => "openai";
+    /// <inheritdoc/>
     protected override string Endpoint => "https://api.openai.com/v1/chat/completions";
+    /// <inheritdoc/>
     protected override void ApplyAuth(HttpRequestMessage request) =>
         request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Settings.Settings.AiApiKey);
 }
@@ -128,8 +143,11 @@ public sealed class OpenAiProvider(HttpClient httpClient, IAppSettingsProvider s
 public sealed class AzureOpenAiProvider(HttpClient httpClient, IAppSettingsProvider settings, ILogger<AzureOpenAiProvider> logger)
     : OpenAiCompatibleProvider(httpClient, settings, logger)
 {
+    /// <inheritdoc/>
     public override string ProviderId => "azure-openai";
+    /// <inheritdoc/>
     protected override string Endpoint => Settings.Settings.AiEndpoint;
+    /// <inheritdoc/>
     protected override void ApplyAuth(HttpRequestMessage request) =>
         request.Headers.Add("api-key", Settings.Settings.AiApiKey);
 }
@@ -138,9 +156,12 @@ public sealed class AzureOpenAiProvider(HttpClient httpClient, IAppSettingsProvi
 public sealed class LocalLlmProvider(HttpClient httpClient, IAppSettingsProvider settings, ILogger<LocalLlmProvider> logger)
     : OpenAiCompatibleProvider(httpClient, settings, logger)
 {
+    /// <inheritdoc/>
     public override string ProviderId => "local";
+    /// <inheritdoc/>
     protected override string Endpoint => string.IsNullOrWhiteSpace(Settings.Settings.AiEndpoint)
         ? "http://localhost:11434/v1/chat/completions" // Ollama's default OpenAI-compatible port
         : Settings.Settings.AiEndpoint;
+    /// <inheritdoc/>
     protected override void ApplyAuth(HttpRequestMessage request) { /* local servers typically need no auth */ }
 }

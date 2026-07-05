@@ -32,7 +32,10 @@ public sealed partial class ShellWindow : Window
 
     private void ApplyThemeToResources(string themeName)
     {
-        BundledThemeDictionary.BaseTheme = themeName.Equals("Dark", StringComparison.OrdinalIgnoreCase)
+        var bundledTheme = Resources.MergedDictionaries.OfType<BundledTheme>().FirstOrDefault();
+        if (bundledTheme is null) return;
+
+        bundledTheme.BaseTheme = themeName.Equals("Dark", StringComparison.OrdinalIgnoreCase)
             ? BaseTheme.Dark
             : BaseTheme.Light;
     }

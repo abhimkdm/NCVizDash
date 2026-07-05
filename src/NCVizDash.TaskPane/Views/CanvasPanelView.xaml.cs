@@ -1,4 +1,5 @@
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using NCVizDash.Models;
@@ -107,7 +108,7 @@ public sealed partial class CanvasPanelView : System.Windows.Controls.UserContro
 
     /// <summary>
     /// Launches full-screen Story Mode by re-parenting the live
-    /// <see cref="DashboardCanvas"/> into a <see cref="PresentationWindow"/> —
+    /// <see cref="Controls.DashboardCanvas"/> into a <see cref="PresentationWindow"/> —
     /// no second canvas is created, so the presentation always reflects real,
     /// current widget data. Restored back to this view when the window closes.
     /// </summary>

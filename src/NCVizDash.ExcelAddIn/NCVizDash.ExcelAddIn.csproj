@@ -16,17 +16,64 @@
     -->
     <OutputType>Library</OutputType>
     <StartupObject />
+    <ProjectTypeGuids>{BAA0C2D2-18E2-41B9-852F-F413020CAA33};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
+    <OfficeApplication>Excel</OfficeApplication>
+    <DefineConstants>$(DefineConstants);VSTO40</DefineConstants>
+    <LoadBehavior>3</LoadBehavior>
+    <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">18.0</VisualStudioVersion>
+    <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
+  </PropertyGroup>
+  <PropertyGroup>
+    <VstoRefPath Condition="'$(VstoRefPath)' == ''">$(ProgramW6432)\Microsoft Visual Studio\18\Community\Common7\IDE\ReferenceAssemblies\v4.0</VstoRefPath>
   </PropertyGroup>
   <ItemGroup>
-    <COMReference Include="Microsoft.Office.Core">
-      <WrapperTool>tlbimp</WrapperTool>
-      <VersionMinor>8</VersionMinor>
-      <VersionMajor>2</VersionMajor>
-      <Guid>2df8d04c-5bfa-101b-bde5-00aa0044de52</Guid>
-      <Lcid>0</Lcid>
-      <Isolated>false</Isolated>
-      <EmbedInteropTypes>true</EmbedInteropTypes>
-    </COMReference>
+    <Reference Include="Microsoft.Office.Tools.v4.0.Framework, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>$(VstoRefPath)\Microsoft.Office.Tools.v4.0.Framework.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Microsoft.VisualStudio.Tools.Applications.Runtime, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>$(VstoRefPath)\Microsoft.VisualStudio.Tools.Applications.Runtime.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Microsoft.Office.Tools, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>$(VstoRefPath)\Microsoft.Office.Tools.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Microsoft.Office.Tools.Common, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>$(VstoRefPath)\Microsoft.Office.Tools.Common.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Microsoft.Office.Tools.Excel, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>$(VstoRefPath)\Microsoft.Office.Tools.Excel.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Microsoft.Office.Tools.Common.v4.0.Utilities, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>$(VstoRefPath)\Microsoft.Office.Tools.Common.v4.0.Utilities.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.Office.Tools.Excel.v4.0.Utilities, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>$(VstoRefPath)\Microsoft.Office.Tools.Excel.v4.0.Utilities.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="stdole, Version=7.0.3300.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+      <HintPath>$(VstoRefPath)\stdole.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="ThisAddIn.Designer.xml">
+      <DependentUpon>ThisAddIn.cs</DependentUpon>
+    </None>
+    <Compile Update="ThisAddIn.Designer.cs">
+      <DependentUpon>ThisAddIn.Designer.xml</DependentUpon>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="office">
+      <HintPath>$(MSBuildProgramFiles32)\Microsoft Visual Studio\Shared\Visual Studio Tools for Office\PIA\Office15\office.dll</HintPath>
+      <EmbedInteropTypes>false</EmbedInteropTypes>
+      <Private>false</Private>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <!-- VSTO Runtime -->
@@ -62,6 +109,17 @@
     <ProjectReference Include="..\NCVizDash.Connectors\NCVizDash.Connectors.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <!-- ChartHost loads from the add-in base directory (AppDomain.CurrentDomain.BaseDirectory). -->
+    <Content Include="..\NCVizDash.TaskPane\Assets\chart-host.html">
+      <Link>Assets\ChartHost\chart-host.html</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\NCVizDash.TaskPane\Assets\echarts.min.js" Condition="Exists('..\NCVizDash.TaskPane\Assets\echarts.min.js')">
+      <Link>Assets\ChartHost\echarts.min.js</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
     <!-- net48 SDK-style projects don't get System.Net.Http implicitly the way
          net8+ does. Using the NuGet package form (rather than a plain
          <Reference Include="System.Net.Http" /> framework reference) since
@@ -73,4 +131,5 @@
          package-reference identity conflict. -->
     <PackageReference Include="System.Net.Http" Version="4.3.4" />
   </ItemGroup>
+  <Import Project="$(VSToolsPath)\OfficeTools\Microsoft.VisualStudio.Tools.Office.targets" Condition="'$(VSToolsPath)' != '' And Exists('$(VSToolsPath)\OfficeTools\Microsoft.VisualStudio.Tools.Office.targets')" />
 </Project>

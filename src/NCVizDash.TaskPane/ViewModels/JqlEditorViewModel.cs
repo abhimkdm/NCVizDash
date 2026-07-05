@@ -9,7 +9,15 @@ using System.Collections.ObjectModel;
 namespace NCVizDash.TaskPane.ViewModels;
 
 /// <summary>Import mode for a JQL query result, matching the v2.0 "Query Preview" spec.</summary>
-public enum JqlImportMode { NewDataset, ReplaceDataset, AppendDataset }
+public enum JqlImportMode
+{
+    /// <summary>Import as a new dataset.</summary>
+    NewDataset,
+    /// <summary>Replace an existing dataset.</summary>
+    ReplaceDataset,
+    /// <summary>Append rows to an existing dataset.</summary>
+    AppendDataset
+}
 
 /// <summary>
 /// Drives the Dynamic JQL Editor (v2.0 Feature 5): connection management, JQL
@@ -26,6 +34,7 @@ public sealed partial class JqlEditorViewModel : ObservableObject
     private readonly IAnalyticsEngine _analyticsEngine;
     private readonly ExplorerPanelViewModel _explorerPanel;
 
+    /// <summary>Saved Jira connection profiles available for selection.</summary>
     public ObservableCollection<JiraConnectionProfile> Connections { get; } = [];
 
     [ObservableProperty] private JiraConnectionProfile? _selectedConnection;
@@ -40,6 +49,7 @@ public sealed partial class JqlEditorViewModel : ObservableObject
     [ObservableProperty] private IReadOnlyList<string> _previewColumns = [];
     [ObservableProperty] private int _previewRecordCount;
 
+    /// <summary>Initialises the JQL editor with connector, profile store, analytics engine, and explorer panel.</summary>
     public JqlEditorViewModel(
         ILogger<JqlEditorViewModel> logger,
         JiraConnector jiraConnector,
@@ -58,6 +68,7 @@ public sealed partial class JqlEditorViewModel : ObservableObject
 
     // ── Connection management ────────────────────────────────────────────────
 
+    /// <summary>Reloads connection profiles from persistent storage.</summary>
     public void ReloadConnections()
     {
         Connections.Clear();
@@ -65,6 +76,7 @@ public sealed partial class JqlEditorViewModel : ObservableObject
             Connections.Add(profile);
     }
 
+    /// <summary>Persists a Jira connection profile and refreshes the connection list.</summary>
     [RelayCommand]
     public void SaveConnection(JiraConnectionProfile profile)
     {
@@ -78,6 +90,7 @@ public sealed partial class JqlEditorViewModel : ObservableObject
         StatusMessage = $"Connection '{profile.ConnectionName}' saved.";
     }
 
+    /// <summary>Tests connectivity for the given Jira connection profile.</summary>
     [RelayCommand]
     public async Task TestConnectionAsync(JiraConnectionProfile profile)
     {
@@ -92,6 +105,7 @@ public sealed partial class JqlEditorViewModel : ObservableObject
 
     // ── JQL validation + execution ────────────────────────────────────────────
 
+    /// <summary>Validates the current JQL text against the selected Jira connection.</summary>
     [RelayCommand]
     public async Task ValidateJqlAsync()
     {

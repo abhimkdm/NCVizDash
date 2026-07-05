@@ -7,6 +7,7 @@
              mc:Ignorable="d"
              xmlns:md="http://materialdesigninxaml.net/winfx/xaml/themes"
              xmlns:vm="clr-namespace:NCVizDash.TaskPane.ViewModels"
+             xmlns:models="clr-namespace:NCVizDash.Models;assembly=NCVizDash.Models"
              d:DataContext="{d:DesignInstance vm:ExplorerPanelViewModel}">
 
     <Grid>
@@ -51,7 +52,7 @@
             <ScrollViewer VerticalScrollBarVisibility="Auto">
                 <ItemsControl ItemsSource="{Binding FilteredDataSources}">
                     <ItemsControl.ItemTemplate>
-                        <DataTemplate DataType="{x:Type vm:DataSourceDescriptor}">
+                        <DataTemplate DataType="{x:Type models:DataSourceDescriptor}">
                             <Expander Margin="4,2"
                                       IsExpanded="True"
                                       MouseEnter="DataSourceHeader_MouseEnter"
@@ -78,7 +79,7 @@
                                 <ItemsControl ItemsSource="{Binding Fields}"
                                               Margin="16,0,0,4">
                                     <ItemsControl.ItemTemplate>
-                                        <DataTemplate DataType="{x:Type vm:FieldDescriptor}">
+                                        <DataTemplate DataType="{x:Type models:FieldDescriptor}">
                                             <Border Padding="4,3"
                                                     CornerRadius="4"
                                                     Cursor="Hand"

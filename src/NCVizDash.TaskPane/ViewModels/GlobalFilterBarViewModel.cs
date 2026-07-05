@@ -15,8 +15,11 @@ namespace NCVizDash.TaskPane.ViewModels;
 /// </summary>
 public sealed class GlobalFilterFieldOption
 {
+    /// <summary>Identifier of the data source that owns this field.</summary>
     public Guid DataSourceId { get; init; }
+    /// <summary>Display name of the data source that owns this field.</summary>
     public string DataSourceName { get; init; } = string.Empty;
+    /// <summary>Field descriptor for the filterable column.</summary>
     public FieldDescriptor Field { get; init; } = new();
 
     /// <summary>Combined label shown in the field picker, e.g. "Sales › Region".</summary>

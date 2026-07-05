@@ -11,21 +11,32 @@ namespace NCVizDash.TaskPane.Templates;
 /// </summary>
 public sealed class TemplateWidgetSlot
 {
+    /// <summary>Display title for the widget created from this slot.</summary>
     public string Title { get; init; } = string.Empty;
+    /// <summary>Chart or visual type for this slot.</summary>
     public VisualType VisualType { get; init; }
+    /// <summary>Number of measure fields required to fill this slot.</summary>
     public int MeasuresNeeded { get; init; } = 1;
+    /// <summary>Number of dimension fields required to fill this slot.</summary>
     public int DimensionsNeeded { get; init; }
+    /// <summary>When true, prefers a time dimension when matching fields.</summary>
     public bool PreferTimeDimension { get; init; }
+    /// <summary>Default column span on the dashboard grid.</summary>
     public int ColumnSpan { get; init; } = 6;
+    /// <summary>Default row span on the dashboard grid.</summary>
     public int RowSpan { get; init; } = 4;
 }
 
 /// <summary>A named, pre-built dashboard layout — a list of widget slots plus a display name/description.</summary>
 public sealed class DashboardTemplate
 {
+    /// <summary>Template display name.</summary>
     public string Name { get; init; } = string.Empty;
+    /// <summary>Short description shown in the template picker.</summary>
     public string Description { get; init; } = string.Empty;
+    /// <summary>Category used to group templates in the UI.</summary>
     public string Category { get; init; } = string.Empty;
+    /// <summary>Widget slots that make up this template layout.</summary>
     public IReadOnlyList<TemplateWidgetSlot> Slots { get; init; } = [];
 }
 
@@ -36,6 +47,7 @@ public sealed class DashboardTemplate
 /// </summary>
 public static class TemplateRegistry
 {
+    /// <summary>All built-in dashboard templates.</summary>
     public static IReadOnlyList<DashboardTemplate> All { get; } =
     [
         new DashboardTemplate

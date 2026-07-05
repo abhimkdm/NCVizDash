@@ -1,3 +1,4 @@
+using System.IO;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using NCVizDash.Models;
@@ -19,6 +20,7 @@ public sealed class DashboardShareService
 
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
 
+    /// <summary>Initialises the dashboard share service with a logger.</summary>
     public DashboardShareService(ILogger<DashboardShareService> logger)
     {
         _logger = logger;

@@ -18,6 +18,7 @@ public sealed class BookmarkManager
     private readonly IGlobalFilterManager _globalFilterManager;
     private readonly Dictionary<Guid, List<Bookmark>> _bookmarksByDashboard = new();
 
+    /// <summary>Initialises the bookmark manager with a logger and global filter manager.</summary>
     public BookmarkManager(ILogger<BookmarkManager> logger, IGlobalFilterManager globalFilterManager)
     {
         _logger = logger;

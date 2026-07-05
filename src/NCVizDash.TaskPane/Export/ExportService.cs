@@ -27,6 +27,7 @@ public sealed class ExportService
 {
     private readonly ILogger<ExportService> _logger;
 
+    /// <summary>Initialises the export service with a logger.</summary>
     public ExportService(ILogger<ExportService> logger)
     {
         _logger = logger;

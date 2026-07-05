@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging.Abstractions;
 using NCVizDash.Models;
 using NCVizDash.RuleEngine;
 using Xunit;
@@ -7,7 +8,7 @@ namespace NCVizDash.Tests.Core;
 /// <summary>Unit tests for <see cref="DeterministicRuleEngine"/>.</summary>
 public sealed class DeterministicRuleEngineTests
 {
-    private readonly DeterministicRuleEngine _sut = new();
+    private readonly DeterministicRuleEngine _sut = new(NullLogger<DeterministicRuleEngine>.Instance);
 
     [Fact]
     public void Recommend_SingleMeasure_ReturnsKpi()

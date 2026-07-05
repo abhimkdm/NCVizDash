@@ -18,6 +18,7 @@ public sealed partial class PresentationWindow : Window
     private readonly FrameworkElement _canvasHost;
     private readonly Guid _dashboardId;
 
+    /// <summary>Creates a full-screen presentation window around the live dashboard canvas.</summary>
     public PresentationWindow(
         PresentationController controller,
         Core.Abstractions.IGlobalFilterManager globalFilterManager,

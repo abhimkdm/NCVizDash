@@ -18,6 +18,7 @@ public sealed class AiFeatureGate
     private readonly IReadOnlyDictionary<string, IAiProvider> _providersById;
     private readonly ILogger<AiFeatureGate> _logger;
 
+    /// <summary>Initialises the gate with settings, registered providers, and a logger.</summary>
     public AiFeatureGate(
         IAppSettingsProvider settings,
         IEnumerable<IAiProvider> providers,

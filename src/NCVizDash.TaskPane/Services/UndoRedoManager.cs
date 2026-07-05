@@ -21,12 +21,15 @@ public sealed class UndoRedoManager
 
     private static readonly JsonSerializerOptions JsonOptions = new();
 
+    /// <summary>Initialises the undo/redo manager with a logger.</summary>
     public UndoRedoManager(ILogger<UndoRedoManager> logger)
     {
         _logger = logger;
     }
 
+    /// <summary>True when at least one undo snapshot is available.</summary>
     public bool CanUndo => _undoStack.Count > 0;
+    /// <summary>True when at least one redo snapshot is available.</summary>
     public bool CanRedo => _redoStack.Count > 0;
 
     /// <summary>Raised whenever CanUndo/CanRedo may have changed, for toolbar button binding.</summary>

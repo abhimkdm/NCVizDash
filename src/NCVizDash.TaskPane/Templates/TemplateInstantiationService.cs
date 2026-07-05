@@ -26,6 +26,7 @@ public sealed class TemplateInstantiationService
 {
     private readonly ILogger<TemplateInstantiationService> _logger;
 
+    /// <summary>Initialises the template instantiation service with a logger.</summary>
     public TemplateInstantiationService(ILogger<TemplateInstantiationService> logger)
     {
         _logger = logger;
