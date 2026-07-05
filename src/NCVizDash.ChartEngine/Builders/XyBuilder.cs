@@ -5,6 +5,7 @@ public static class XyBuilder
 {
     // ── Scatter ───────────────────────────────────────────────────────────────
 
+    /// <summary>Builds an ECharts option for a scatter chart.</summary>
     public static Dictionary<string, object?> BuildScatter(ChartOptionContext ctx)
     {
         var xField = ctx.MeasFields.ElementAtOrDefault(0) ?? string.Empty;
@@ -59,6 +60,7 @@ public static class XyBuilder
 
     // ── Bubble ────────────────────────────────────────────────────────────────
 
+    /// <summary>Builds an ECharts option for a bubble chart.</summary>
     public static Dictionary<string, object?> BuildBubble(ChartOptionContext ctx)
     {
         var xField    = ctx.MeasFields.ElementAtOrDefault(0) ?? string.Empty;
@@ -102,6 +104,7 @@ public static class XyBuilder
 
     // ── Heatmap ───────────────────────────────────────────────────────────────
 
+    /// <summary>Builds an ECharts option for a heatmap chart.</summary>
     public static Dictionary<string, object?> BuildHeatmap(ChartOptionContext ctx)
     {
         var dim1 = ctx.DimFields.ElementAtOrDefault(0) ?? string.Empty;
@@ -162,6 +165,7 @@ public static class XyBuilder
 
     // ── Treemap ───────────────────────────────────────────────────────────────
 
+    /// <summary>Builds an ECharts option for a treemap chart.</summary>
     public static Dictionary<string, object?> BuildTreemap(ChartOptionContext ctx)
     {
         var measure = ctx.MeasFields.FirstOrDefault() ?? string.Empty;

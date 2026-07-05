@@ -9,12 +9,25 @@ namespace NCVizDash.ChartEngine;
 /// </summary>
 public sealed class AnimationPreset
 {
+    /// <summary>Whether entry animation is enabled at all.</summary>
     public bool   Animation               { get; init; } = true;
+
+    /// <summary>Duration of the initial entry animation, in milliseconds.</summary>
     public int    AnimationDuration       { get; init; } = 800;
+
+    /// <summary>Easing function used for the initial entry animation.</summary>
     public string AnimationEasing         { get; init; } = "cubicOut";
+
+    /// <summary>Duration of animations triggered by subsequent data updates, in milliseconds.</summary>
     public int    AnimationDurationUpdate { get; init; } = 500;
+
+    /// <summary>Easing function used for animations triggered by subsequent data updates.</summary>
     public string AnimationEasingUpdate   { get; init; } = "cubicInOut";
+
+    /// <summary>Data-point count above which ECharts disables animation for performance.</summary>
     public int    AnimationThreshold      { get; init; } = 2000;
+
+    /// <summary>Delay, in milliseconds, before the entry animation begins.</summary>
     public int    AnimationDelay          { get; init; } = 0;
 }
 

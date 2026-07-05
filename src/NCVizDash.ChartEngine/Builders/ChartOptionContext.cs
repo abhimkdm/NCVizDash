@@ -12,19 +12,32 @@ public sealed class ChartOptionContext
 {
     // ── Resolved inputs ───────────────────────────────────────────────────────
 
+    /// <summary>The widget definition this context was built for.</summary>
     public DashboardWidget Widget { get; }
+
+    /// <summary>Raw data rows backing the widget.</summary>
     public IReadOnlyList<IReadOnlyDictionary<string, object?>> Rows { get; }
+
+    /// <summary>Resolved theme name (e.g. "Light" or "Dark").</summary>
     public string Theme { get; }
+
+    /// <summary>Whether <see cref="Theme"/> is the dark theme.</summary>
     public bool IsDark => Theme.Equals("Dark", StringComparison.OrdinalIgnoreCase);
 
     // ── Derived field lists ───────────────────────────────────────────────────
 
+    /// <summary>Dimension (category) fields configured on the widget.</summary>
     public IReadOnlyList<string> DimFields  { get; }
+
+    /// <summary>Measure (numeric) fields configured on the widget.</summary>
     public IReadOnlyList<string> MeasFields { get; }
+
+    /// <summary>Series-breakout fields configured on the widget.</summary>
     public IReadOnlyList<string> SerFields  { get; }
 
     // ── Palette ───────────────────────────────────────────────────────────────
 
+    /// <summary>Theme-appropriate colour palette for series/markers.</summary>
     public IReadOnlyList<string> Palette => ChartPalette.Palette(Theme);
 
     /// <summary>Initialises the context from a widget + data + theme triple.</summary>

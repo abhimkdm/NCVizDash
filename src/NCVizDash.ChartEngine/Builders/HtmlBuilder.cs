@@ -166,7 +166,7 @@ public static class HtmlBuilder
     /// <summary>Minimal HTML-entity encoder (avoids taking a System.Web dependency for 5 characters).</summary>
     private static string HtmlEncode(string? value)
     {
-        if (string.IsNullOrEmpty(value)) return string.Empty;
+        if (value is null || value.Length == 0) return string.Empty;
         return value
             .Replace("&", "&amp;")
             .Replace("<", "&lt;")

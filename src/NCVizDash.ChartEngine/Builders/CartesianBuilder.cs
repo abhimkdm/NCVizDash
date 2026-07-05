@@ -5,6 +5,7 @@ public static class CartesianBuilder
 {
     // ── Bar ───────────────────────────────────────────────────────────────────
 
+    /// <summary>Builds an ECharts option for a bar chart.</summary>
     public static Dictionary<string, object?> BuildBar(ChartOptionContext ctx)
     {
         var categories = ctx.CategoryLabels();
@@ -24,6 +25,7 @@ public static class CartesianBuilder
 
     // ── Line ──────────────────────────────────────────────────────────────────
 
+    /// <summary>Builds an ECharts option for a line chart.</summary>
     public static Dictionary<string, object?> BuildLine(ChartOptionContext ctx)
     {
         var categories = ctx.CategoryLabels();
@@ -45,6 +47,7 @@ public static class CartesianBuilder
 
     // ── Area ─────────────────────────────────────────────────────────────────
 
+    /// <summary>Builds an ECharts option for a stacked area chart.</summary>
     public static Dictionary<string, object?> BuildArea(ChartOptionContext ctx)
     {
         var categories = ctx.CategoryLabels();
