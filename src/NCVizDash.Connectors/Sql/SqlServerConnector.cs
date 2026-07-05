@@ -7,7 +7,7 @@ using NCVizDash.Models;
 namespace NCVizDash.Connectors.Sql;
 
 /// <summary>
-/// Connects to SQL Server. <paramref name="connectionInfo"/> is a standard
+/// Connects to SQL Server. <c>connectionInfo</c> is a standard
 /// ADO.NET connection string. <c>DiscoverAsync</c> here treats the *entire
 /// connection string* as identifying a single logical data source named after
 /// the query — callers are expected to pair a connection string with a specific
