@@ -1,5 +1,4 @@
 using System.Reflection;
-using System.Runtime.Loader;
 using Microsoft.Extensions.Logging;
 using NCVizDash.Core.Abstractions.Plugins;
 
@@ -9,22 +8,38 @@ namespace NCVizDash.TaskPane.Plugins;
 /// Scans <see cref="Models.AppSettings.PluginDirectory"/> for `.dll` files and, for
 /// each one, discovers types implementing any of the four plugin interfaces
 /// (<see cref="IChartPlugin"/>, <see cref="IWidgetPlugin"/>, <see cref="IDataSourcePlugin"/>,
-/// <see cref="IThemePlugin"/>) via reflection. Each plugin DLL is loaded into its
-/// own collectible <see cref="AssemblyLoadContext"/> so a broken/malicious plugin
-/// can't corrupt the host app's own loaded types, and so plugins could in principle
-/// be unloaded later without restarting Excel (not wired up yet, but the isolation
-/// is in place for it).
+/// <see cref="IThemePlugin"/>) via reflection.
+/// <para>
+/// <b>Isolation note:</b> true per-plugin isolation (a separate, collectible
+/// <c>AssemblyLoadContext</c> per plugin so a broken/malicious plugin can't corrupt
+/// the host's own loaded types, and so plugins could later be unloaded without
+/// restarting Excel) is a .NET 5+ API and isn't available on .NET Framework 4.8,
+/// which this host targets. Plugins are loaded directly into the default load
+/// context via <see cref="Assembly.LoadFrom(string)"/> instead — the closest
+/// equivalent on .NET Framework would be a separate <c>AppDomain</c>, but that
+/// requires cross-domain marshaling for every plugin call, which is a much larger
+/// scope change than this pass covers. Only load plugins you trust.
+/// </para>
 /// </summary>
 public sealed class PluginLoader
 {
     private readonly ILogger<PluginLoader> _logger;
-    private readonly List<AssemblyLoadContext> _loadedContexts = [];
+    private readonly List<Assembly> _loadedAssemblies = [];
 
+    /// <summary>Discovered chart plugins.</summary>
     public List<IChartPlugin> ChartPlugins { get; } = [];
+
+    /// <summary>Discovered widget plugins.</summary>
     public List<IWidgetPlugin> WidgetPlugins { get; } = [];
+
+    /// <summary>Discovered data source plugins.</summary>
     public List<IDataSourcePlugin> DataSourcePlugins { get; } = [];
+
+    /// <summary>Discovered theme plugins.</summary>
     public List<IThemePlugin> ThemePlugins { get; } = [];
 
+    /// <summary>Initializes a new instance of the <see cref="PluginLoader"/> class.</summary>
+    /// <param name="logger">Logger used for diagnostic output.</param>
     public PluginLoader(ILogger<PluginLoader> logger)
     {
         _logger = logger;
@@ -59,10 +74,8 @@ public sealed class PluginLoader
 
     private void LoadPluginAssembly(string path)
     {
-        var context = new AssemblyLoadContext($"Plugin_{Path.GetFileNameWithoutExtension(path)}", isCollectible: true);
-        _loadedContexts.Add(context);
-
-        var assembly = context.LoadFromAssemblyPath(path);
+        var assembly = Assembly.LoadFrom(path);
+        _loadedAssemblies.Add(assembly);
 
         foreach (var type in assembly.GetExportedTypes())
         {

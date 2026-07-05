@@ -206,8 +206,8 @@ public sealed partial class ExplorerPanelViewModel : ObservableObject
         var term = SearchText.Trim();
 
         return DataSources.Where(ds =>
-            ds.Name.Contains(term, StringComparison.OrdinalIgnoreCase) ||
-            ds.Fields.Any(f => f.DisplayName.Contains(term, StringComparison.OrdinalIgnoreCase)));
+            ds.Name.IndexOf(term, StringComparison.OrdinalIgnoreCase) >= 0 ||
+            ds.Fields.Any(f => f.DisplayName.IndexOf(term, StringComparison.OrdinalIgnoreCase) >= 0));
     }
 
     // ── Search reactivity ─────────────────────────────────────────────────────
@@ -483,7 +483,6 @@ public sealed partial class CanvasPanelViewModel : ObservableObject
     /// same chart type / field mappings / local filters, offset by one grid unit so the
     /// copy doesn't sit exactly on top of the original — and adds it to the canvas.
     /// </summary>
-    [RelayCommand]
     public DashboardWidget DuplicateWidget(DashboardWidget source)
     {
         if (ActiveDashboard is not null) UndoRedo.RecordSnapshot(ActiveDashboard);
@@ -689,7 +688,8 @@ public sealed partial class VisualLibraryViewModel : ObservableObject
 
     /// <summary>All visual types available for drag-and-drop.</summary>
     public IReadOnlyList<VisualTypeEntry> AvailableVisuals { get; } =
-        Enum.GetValues<VisualType>()
+        Enum.GetValues(typeof(VisualType))
+            .Cast<VisualType>()
             .Select(vt => new VisualTypeEntry(vt))
             .ToList();
 

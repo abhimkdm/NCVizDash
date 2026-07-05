@@ -26,6 +26,10 @@ public sealed class CachingAnalyticsEngine : IAnalyticsEngine
     private readonly object _lock = new();
     private readonly TimeSpan _ttl;
 
+    /// <summary>Initializes a new instance of the <see cref="CachingAnalyticsEngine"/> class.</summary>
+    /// <param name="inner">The underlying analytics engine to decorate.</param>
+    /// <param name="logger">Logger used for diagnostic output.</param>
+    /// <param name="ttl">Cache entry lifetime; defaults to 15 seconds.</param>
     public CachingAnalyticsEngine(IAnalyticsEngine inner, ILogger<CachingAnalyticsEngine> logger, TimeSpan? ttl = null)
     {
         _inner = inner;
@@ -33,6 +37,7 @@ public sealed class CachingAnalyticsEngine : IAnalyticsEngine
         _ttl = ttl ?? TimeSpan.FromSeconds(15);
     }
 
+    /// <inheritdoc/>
     public async Task LoadDataSourceAsync(
         DataSourceDescriptor descriptor, IReadOnlyList<IReadOnlyDictionary<string, object?>> rows, CancellationToken ct = default)
     {
@@ -40,9 +45,11 @@ public sealed class CachingAnalyticsEngine : IAnalyticsEngine
         InvalidateAll("data source loaded/reloaded");
     }
 
+    /// <inheritdoc/>
     public Task<IReadOnlyList<IReadOnlyDictionary<string, object?>>> QueryAsync(string sql, CancellationToken ct = default) =>
         _inner.QueryAsync(sql, ct); // raw-SQL path bypasses the cache — used for ad-hoc/administrative queries only
 
+    /// <inheritdoc/>
     public async Task<IReadOnlyList<IReadOnlyDictionary<string, object?>>> QueryAsync(QuerySpec spec, CancellationToken ct = default)
     {
         var key = HashOf(spec);
@@ -66,12 +73,14 @@ public sealed class CachingAnalyticsEngine : IAnalyticsEngine
         return rows;
     }
 
+    /// <inheritdoc/>
     public async Task UnloadDataSourceAsync(Guid dataSourceId, CancellationToken ct = default)
     {
         await _inner.UnloadDataSourceAsync(dataSourceId, ct);
         InvalidateAll("data source unloaded");
     }
 
+    /// <inheritdoc/>
     public string? GetTableName(Guid dataSourceId) => _inner.GetTableName(dataSourceId);
 
     private void InvalidateAll(string reason)
@@ -86,10 +95,18 @@ public sealed class CachingAnalyticsEngine : IAnalyticsEngine
         }
     }
 
+    // SHA256.HashData(...) and Convert.ToHexString(...) are .NET 5+ conveniences that
+    // don't exist on .NET Framework 4.8 — using the classic Create()/ComputeHash()
+    // pattern and a manual hex conversion instead.
     private static string HashOf(QuerySpec spec)
     {
         var json = JsonSerializer.Serialize(spec);
-        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(json));
-        return Convert.ToHexString(bytes);
+        using var sha256 = SHA256.Create();
+        var bytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(json));
+
+        var hex = new StringBuilder(bytes.Length * 2);
+        foreach (var b in bytes)
+            hex.Append(b.ToString("x2"));
+        return hex.ToString();
     }
 }

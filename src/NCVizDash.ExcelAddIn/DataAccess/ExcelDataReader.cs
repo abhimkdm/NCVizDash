@@ -231,10 +231,10 @@ public sealed class ExcelDataReader : IExcelDataReader
             var cell = (Range)dataRange.Cells[1, zeroBasedColIndex + 1];
             var format = cell.NumberFormat as string ?? string.Empty;
 
-            return format.Contains('y', StringComparison.OrdinalIgnoreCase) ||
-                   (format.Contains('d', StringComparison.OrdinalIgnoreCase) &&
-                    format.Contains('m', StringComparison.OrdinalIgnoreCase)) ||
-                   format.Contains("h:mm", StringComparison.OrdinalIgnoreCase);
+            return format.IndexOf("y", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                   (format.IndexOf("d", StringComparison.OrdinalIgnoreCase) >= 0 &&
+                    format.IndexOf("m", StringComparison.OrdinalIgnoreCase) >= 0) ||
+                   format.IndexOf("h:mm", StringComparison.OrdinalIgnoreCase) >= 0;
         }
         catch
         {

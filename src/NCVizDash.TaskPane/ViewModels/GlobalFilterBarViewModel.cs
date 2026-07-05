@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
 using NCVizDash.Core.Abstractions;
 using NCVizDash.Models;
+using NCVizDash.TaskPane.Services;
 using System.Collections.ObjectModel;
 
 namespace NCVizDash.TaskPane.ViewModels;

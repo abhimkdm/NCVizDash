@@ -1,3 +1,4 @@
+using System.IO;
 using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Presentation;
@@ -90,7 +91,7 @@ public sealed class ExportService
     {
         using var doc = PresentationDocument.Create(filePath, PresentationDocumentType.Presentation);
         var presentationPart = doc.AddPresentationPart();
-        presentationPart.Presentation = new Presentation();
+        presentationPart.Presentation = new P.Presentation();
 
         var slideMasterPart = CreateSlideMasterPart(presentationPart);
         var slideIdList = new SlideIdList();

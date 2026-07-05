@@ -46,6 +46,22 @@ public sealed class WidgetCard : FrameworkElement
     private readonly ChartHost _chartHost;
     private bool _isDark;
 
+    /// <summary>
+    /// Whether this card should render its dark-theme chrome. Not wired to
+    /// <see cref="Services.ThemeService"/> automatically — the host (e.g.
+    /// <see cref="DashboardCanvas"/>) is expected to set this whenever the theme changes.
+    /// </summary>
+    public bool IsDark
+    {
+        get => _isDark;
+        set
+        {
+            if (_isDark == value) return;
+            _isDark = value;
+            InvalidateVisual();
+        }
+    }
+
     /// <summary>Initialises a card for the given widget, creating its child <see cref="ChartHost"/>.</summary>
     public WidgetCard(DashboardWidget widget, ILogger<ChartHost>? chartHostLogger = null)
     {

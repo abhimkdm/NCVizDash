@@ -33,17 +33,50 @@ public sealed class DashboardCanvas : System.Windows.Controls.Panel
 {
     // ── Dependency properties ────────────────────────────────────────────────
 
+    /// <summary>Identifies the <see cref="ViewModel"/> dependency property.</summary>
     public static readonly DependencyProperty ViewModelProperty =
         DependencyProperty.Register(nameof(ViewModel), typeof(CanvasPanelViewModel),
             typeof(DashboardCanvas), new PropertyMetadata(null, OnViewModelChanged));
 
+    /// <summary>Identifies the <see cref="ShowGrid"/> dependency property.</summary>
     public static readonly DependencyProperty ShowGridProperty =
         DependencyProperty.Register(nameof(ShowGrid), typeof(bool),
             typeof(DashboardCanvas), new PropertyMetadata(true, (d, _) => ((DashboardCanvas)d).InvalidateVisual()));
 
+    /// <summary>Identifies the <see cref="SnapToGrid"/> dependency property.</summary>
     public static readonly DependencyProperty SnapToGridProperty =
         DependencyProperty.Register(nameof(SnapToGrid), typeof(bool),
             typeof(DashboardCanvas), new PropertyMetadata(true));
+
+    /// <summary>
+    /// Border brush drawn around the canvas edge — used by <see cref="Views.CanvasPanelView"/>
+    /// to highlight the canvas while a drag-and-drop operation is over it. <see cref="Panel"/>
+    /// has no built-in border (unlike <see cref="System.Windows.Controls.Control"/>/
+    /// <see cref="System.Windows.Controls.Border"/>), so it's added here as a plain
+    /// dependency property and drawn manually in <see cref="OnRender"/>.
+    /// </summary>
+    public static readonly DependencyProperty BorderBrushProperty =
+        DependencyProperty.Register(nameof(BorderBrush), typeof(Brush),
+            typeof(DashboardCanvas), new PropertyMetadata(Brushes.Transparent, (d, _) => ((DashboardCanvas)d).InvalidateVisual()));
+
+    /// <summary>Thickness of the highlight border drawn per <see cref="BorderBrush"/>.</summary>
+    public static readonly DependencyProperty BorderThicknessProperty =
+        DependencyProperty.Register(nameof(BorderThickness), typeof(Thickness),
+            typeof(DashboardCanvas), new PropertyMetadata(new Thickness(0), (d, _) => ((DashboardCanvas)d).InvalidateVisual()));
+
+    /// <summary>Border brush drawn around the canvas edge (see <see cref="BorderBrushProperty"/>).</summary>
+    public Brush BorderBrush
+    {
+        get => (Brush)GetValue(BorderBrushProperty);
+        set => SetValue(BorderBrushProperty, value);
+    }
+
+    /// <summary>Thickness of the highlight border drawn around the canvas edge.</summary>
+    public Thickness BorderThickness
+    {
+        get => (Thickness)GetValue(BorderThicknessProperty);
+        set => SetValue(BorderThicknessProperty, value);
+    }
 
     /// <summary>The canvas ViewModel. Provides widget list, selection, and operation entry-points.</summary>
     public CanvasPanelViewModel? ViewModel
@@ -142,6 +175,21 @@ public sealed class DashboardCanvas : System.Windows.Controls.Panel
 
         if (_dragMode == DragMode.RubberBand)
             DrawRubberBand(dc);
+
+        DrawHighlightBorder(dc, bounds);
+    }
+
+    private void DrawHighlightBorder(DrawingContext dc, Rect bounds)
+    {
+        var thickness = BorderThickness;
+        var maxEdge = Math.Max(Math.Max(thickness.Left, thickness.Top), Math.Max(thickness.Right, thickness.Bottom));
+        if (maxEdge <= 0) return;
+
+        var pen = new Pen(BorderBrush, maxEdge);
+        var inset = maxEdge / 2;
+        dc.DrawRectangle(null, pen,
+            new Rect(bounds.X + inset, bounds.Y + inset,
+                     Math.Max(0, bounds.Width - maxEdge), Math.Max(0, bounds.Height - maxEdge)));
     }
 
     private void DrawGrid(DrawingContext dc, Rect bounds)
