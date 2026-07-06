@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Media;
 using Microsoft.Extensions.Logging;
 using NCVizDash.Models;
+using NCVizDash.TaskPane.Geometry;
 using NCVizDash.TaskPane.Services;
 using Point = System.Windows.Point;
 using Size = System.Windows.Size;
@@ -111,8 +112,12 @@ public sealed class WidgetCard : FrameworkElement
     /// <inheritdoc/>
     protected override Size MeasureOverride(Size availableSize)
     {
-        _chartHost.Measure(availableSize);
-        return availableSize;
+        var width = GridGeometryHelper.ToPixels(Widget.Layout.ColumnSpan);
+        var height = GridGeometryHelper.ToPixels(Widget.Layout.RowSpan);
+        var childSize = new Size(width, height);
+
+        _chartHost.Measure(childSize);
+        return childSize;
     }
 
     /// <inheritdoc/>
@@ -136,7 +141,11 @@ public sealed class WidgetCard : FrameworkElement
             InvalidateVisual();
     }
 
-    private void OnLayoutPropertyChanged(object? sender, PropertyChangedEventArgs e) => InvalidateVisual();
+    private void OnLayoutPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        InvalidateMeasure();
+        InvalidateVisual();
+    }
 
     // ── Chrome rendering (title bar, border, resize grip) ────────────────────
 

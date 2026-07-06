@@ -37,7 +37,7 @@
                   size="normal"
                   onAction="BtnSaveDashboard_Click" />
 
-          <menuSeparator id="sepDashboard" />
+          <separator id="sepDashboard" />
 
           <button id="btnTemplates"
                   label="Templates"

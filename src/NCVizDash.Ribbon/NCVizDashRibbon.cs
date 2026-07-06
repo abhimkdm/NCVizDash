@@ -54,21 +54,37 @@ public sealed class NCVizDashRibbon : IRibbonExtensibility
     /// <inheritdoc/>
     public string GetCustomUI(string ribbonId)
     {
-        _logger.LogDebug("GetCustomUI called for ribbon '{RibbonId}'", ribbonId);
+        _logger.LogInformation("GetCustomUI called for ribbon '{RibbonId}'.", ribbonId);
+
+        if (!string.IsNullOrEmpty(ribbonId)
+            && !ribbonId.Equals("Microsoft.Excel.Workbook", StringComparison.OrdinalIgnoreCase))
+        {
+            return string.Empty;
+        }
 
         var asm = Assembly.GetExecutingAssembly();
-        // Embedded resource name follows: <AssemblyName>.<FolderPath>.<FileName>
         const string resourceName = "NCVizDash.Ribbon.NCVizDashRibbon.xml";
 
-        using var stream = asm.GetManifestResourceStream(resourceName);
+        using var stream = asm.GetManifestResourceStream(resourceName)
+            ?? asm.GetManifestResourceNames()
+                .Where(name => name.EndsWith("NCVizDashRibbon.xml", StringComparison.OrdinalIgnoreCase))
+                .Select(asm.GetManifestResourceStream)
+                .FirstOrDefault(s => s is not null);
+
         if (stream is null)
         {
-            _logger.LogError("Ribbon XML resource '{Resource}' not found in assembly.", resourceName);
+            var available = string.Join(", ", asm.GetManifestResourceNames());
+            _logger.LogError(
+                "Ribbon XML resource '{Resource}' not found. Available resources: {Resources}",
+                resourceName,
+                available);
             return string.Empty;
         }
 
         using var reader = new StreamReader(stream);
-        return reader.ReadToEnd();
+        var xml = reader.ReadToEnd();
+        _logger.LogInformation("Ribbon XML loaded ({Length} characters).", xml.Length);
+        return xml;
     }
 
     // ── Ribbon lifecycle ──────────────────────────────────────────────────────

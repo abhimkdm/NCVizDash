@@ -1,6 +1,7 @@
 # Build outputs
 [Bb]in/
 [Oo]bj/
+.build-out/
 [Ll]og/
 [Ll]ogs/
 [Oo]ut/
@@ -64,6 +65,8 @@ _ReSharper*/
 *.snupkg
 **/[Pp]ackages/*
 !**/[Pp]ackages/build/
+.nuget-packages/
+.nuget/
 *.nuget.props
 *.nuget.targets
 project.lock.json

@@ -118,6 +118,12 @@ public sealed class DashboardCanvas : System.Windows.Controls.Panel
 
     private const double ResizeHandleSize = 10d;
 
+    /// <summary>Minimum canvas size — keep in sync with <c>CanvasPanelView.xaml</c>.</summary>
+    private const double MinCanvasWidth = 960d;
+
+    /// <summary>Minimum canvas size — keep in sync with <c>CanvasPanelView.xaml</c>.</summary>
+    private const double MinCanvasHeight = 640d;
+
     // ── Drag state ───────────────────────────────────────────────────────────
 
     private enum DragMode { None, Move, Resize, RubberBand }
@@ -133,10 +139,41 @@ public sealed class DashboardCanvas : System.Windows.Controls.Panel
     /// <inheritdoc/>
     protected override Size MeasureOverride(Size availableSize)
     {
-        foreach (UIElement child in Children)
-            child.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+        var contentSize = ComputeContentSize();
 
-        return availableSize;
+        var childConstraint = new Size(
+            double.IsPositiveInfinity(availableSize.Width) ? contentSize.Width : availableSize.Width,
+            double.IsPositiveInfinity(availableSize.Height) ? contentSize.Height : availableSize.Height);
+
+        foreach (UIElement child in Children)
+            child.Measure(childConstraint);
+
+        var width = contentSize.Width;
+        var height = contentSize.Height;
+
+        if (!double.IsPositiveInfinity(availableSize.Width))
+            width = Math.Min(width, availableSize.Width);
+        if (!double.IsPositiveInfinity(availableSize.Height))
+            height = Math.Min(height, availableSize.Height);
+
+        return new Size(width, height);
+    }
+
+    private Size ComputeContentSize()
+    {
+        var width = MinCanvasWidth;
+        var height = MinCanvasHeight;
+
+        if (ViewModel is null)
+            return new Size(width, height);
+
+        foreach (var widget in ViewModel.Widgets)
+        {
+            width = Math.Max(width, GridGeometryHelper.ToPixels(widget.Layout.Column + widget.Layout.ColumnSpan));
+            height = Math.Max(height, GridGeometryHelper.ToPixels(widget.Layout.Row + widget.Layout.RowSpan));
+        }
+
+        return new Size(width, height);
     }
 
     /// <inheritdoc/>
@@ -343,6 +380,7 @@ public sealed class DashboardCanvas : System.Windows.Controls.Panel
 
         ViewModel?.ClearGuides();
         ReleaseMouseCapture();
+        InvalidateMeasure();
         InvalidateVisual();
         e.Handled = true;
     }
@@ -571,6 +609,7 @@ public sealed class DashboardCanvas : System.Windows.Controls.Panel
     private void OnWidgetsChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
     {
         RebuildChildren();
+        InvalidateMeasure();
         InvalidateArrange();
     }
 

@@ -7,6 +7,7 @@ using NCVizDash.Core.DependencyInjection;
 using NCVizDash.Infrastructure.Logging;
 using NCVizDash.Models;
 using NCVizDash.Ribbon;
+using NCVizDash.TaskPane.Theming;
 using NCVizDash.TaskPane.ViewModels;
 using NCVizDash.TaskPane.Views;
 using Serilog;
@@ -29,6 +30,7 @@ public sealed partial class ThisAddIn
     private ServiceProvider? _serviceProvider;
     private NCVizDashRibbon? _ribbon;
     private Microsoft.Office.Tools.CustomTaskPane? _taskPane;
+    private ShellView? _shellView;
     private ILogger<ThisAddIn>? _logger;
     private System.Timers.Timer? _autoRefreshDebounceTimer;
 
@@ -52,15 +54,9 @@ public sealed partial class ThisAddIn
             SerilogBootstrapper.CreateLogger(settingsProvider.Settings);
             _logger.LogInformation("NC VizDash DI container built successfully.");
 
-            // ── 3. Resolve ribbon (VSTO calls GetCustomUI before Startup in some hosts;
-            //       we keep a reference here for event wiring) ──
-            _ribbon = _serviceProvider.GetRequiredService<NCVizDashRibbon>();
-            _ribbon.DataRefreshRequested    += OnDataRefreshRequested;
-            _ribbon.TaskPaneToggleRequested += OnTaskPaneToggleRequested;
-            _ribbon.ThemeChangeRequested    += OnThemeChangeRequested;
-            _ribbon.NewDashboardRequested   += OnNewDashboardRequested;
-            _ribbon.OpenDashboardRequested  += OnOpenDashboardRequested;
-            _ribbon.SaveDashboardRequested  += OnSaveDashboardRequested;
+            // ── 3. Wire ribbon events on the instance Excel already hosts ──
+            _ribbon ??= _serviceProvider.GetRequiredService<NCVizDashRibbon>();
+            WireRibbonEvents(_ribbon);
 
             // ── 4. Create the WPF task pane wrapped in an ElementHost ──
             InitialiseTaskPane();
@@ -114,14 +110,28 @@ public sealed partial class ThisAddIn
     /// </summary>
     protected override IRibbonExtensibility CreateRibbonExtensibilityObject()
     {
-        // Note: this is called BEFORE Startup on some Office builds.
-        // We return a shell ribbon here; it will be replaced by the DI instance
-        // once the container is built.  To handle this race, we build a minimal
-        // pre-DI ribbon and swap it out once DI is ready.
+        // Called before Startup on most Office builds — keep one instance for Excel + DI.
         _ribbon ??= new NCVizDashRibbon(
             Microsoft.Extensions.Logging.Abstractions
                       .NullLogger<NCVizDashRibbon>.Instance);
         return _ribbon;
+    }
+
+    private void WireRibbonEvents(NCVizDashRibbon ribbon)
+    {
+        ribbon.DataRefreshRequested     -= OnDataRefreshRequested;
+        ribbon.TaskPaneToggleRequested  -= OnTaskPaneToggleRequested;
+        ribbon.ThemeChangeRequested     -= OnThemeChangeRequested;
+        ribbon.NewDashboardRequested    -= OnNewDashboardRequested;
+        ribbon.OpenDashboardRequested   -= OnOpenDashboardRequested;
+        ribbon.SaveDashboardRequested   -= OnSaveDashboardRequested;
+
+        ribbon.DataRefreshRequested     += OnDataRefreshRequested;
+        ribbon.TaskPaneToggleRequested  += OnTaskPaneToggleRequested;
+        ribbon.ThemeChangeRequested     += OnThemeChangeRequested;
+        ribbon.NewDashboardRequested    += OnNewDashboardRequested;
+        ribbon.OpenDashboardRequested   += OnOpenDashboardRequested;
+        ribbon.SaveDashboardRequested   += OnSaveDashboardRequested;
     }
 
     // ── DI composition root ──────────────────────────────────────────────────
@@ -136,8 +146,11 @@ public sealed partial class ThisAddIn
         // Infrastructure (Serilog logging + JSON settings)
         services.AddNCVizDashInfrastructure();
 
-        // Ribbon (singleton – only one ribbon per add-in process)
-        services.AddSingleton<NCVizDashRibbon>();
+        // Ribbon (singleton – Excel receives the same instance from CreateRibbonExtensibilityObject)
+        if (_ribbon is not null)
+            services.AddSingleton(_ribbon);
+        else
+            services.AddSingleton<NCVizDashRibbon>();
 
         // Theme service (Material Design runtime switching)
         services.AddSingleton<NCVizDash.TaskPane.Services.ThemeService>();
@@ -149,8 +162,7 @@ public sealed partial class ThisAddIn
         services.AddSingleton<ShellViewModel>();
         services.AddSingleton<GlobalFilterBarViewModel>();
 
-        // Task Pane WPF Window (transient – created once but owned by VSTO)
-        services.AddTransient<ShellWindow>();
+        // Task pane shell (constructed manually — not via DI — so ElementHost owns the sole visual tree).
 
         // Phase 2 — Excel Data Engine
         services.AddSingleton<IExcelDataReader>(_ =>
@@ -228,22 +240,34 @@ public sealed partial class ThisAddIn
 
     private void InitialiseTaskPane()
     {
-        if (_serviceProvider is null) return;
+        if (_serviceProvider is null || _taskPane is not null)
+            return;
 
-        // WPF window must be created on the STA thread Excel runs on.
-        var shellWindow  = _serviceProvider.GetRequiredService<ShellWindow>();
+        WpfResourceBootstrap.EnsureApplicationResources();
 
-        // Wrap WPF inside a WinForms ElementHost so VSTO can host it.
-        var elementHost  = new System.Windows.Forms.Integration.ElementHost
+        var viewModel = _serviceProvider.GetRequiredService<ShellViewModel>();
+        var themeService = _serviceProvider.GetRequiredService<NCVizDash.TaskPane.Services.ThemeService>();
+
+        // ShellView is a UserControl (not a Window). Hosting Window.Content in ElementHost
+        // fails because InitializeComponent() parents the root grid to the Window; detaching
+        // with shellWindow.Content = null breaks resource lookup. UserControl avoids that.
+        _shellView = new ShellView(themeService);
+
+        var elementHost = new System.Windows.Forms.Integration.ElementHost
         {
-            Child = shellWindow.Content as System.Windows.UIElement,
-            Dock  = System.Windows.Forms.DockStyle.Fill
+            Dock = System.Windows.Forms.DockStyle.Fill,
+            AutoSize = false,
         };
 
-        // Alternatively host the entire Window's content panel.
-        // This avoids creating a detached Window object.
-        var hostControl  = new System.Windows.Forms.UserControl { Dock = System.Windows.Forms.DockStyle.Fill };
+        var hostControl = new System.Windows.Forms.UserControl
+        {
+            Dock = System.Windows.Forms.DockStyle.Fill,
+        };
         hostControl.Controls.Add(elementHost);
+
+        // Host first, then bind — expanding DataTemplates before parenting can confuse ElementHost.
+        elementHost.Child = _shellView;
+        _shellView.BindViewModel(viewModel);
 
         _taskPane = CustomTaskPanes.Add(hostControl, "NC VizDash");
         _taskPane.Width          = 1200;

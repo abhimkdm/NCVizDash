@@ -45,7 +45,11 @@
                     <md:PackIcon Kind="Redo" Width="18" Height="18" />
                 </Button>
 
-                <Separator Style="{StaticResource MaterialDesignVerticalSeparator}" Margin="6,8" />
+                <Border Width="1"
+                        Height="24"
+                        Margin="6,4"
+                        VerticalAlignment="Center"
+                        Background="{DynamicResource MaterialDesignDivider}" />
 
                 <!-- Duplicate -->
                 <Button Style="{StaticResource MaterialDesignIconButton}"
@@ -61,23 +65,31 @@
                     <md:PackIcon Kind="Delete" Width="18" Height="18" />
                 </Button>
 
-                <Separator Style="{StaticResource MaterialDesignVerticalSeparator}" Margin="6,8" />
+                <Border Width="1"
+                        Height="24"
+                        Margin="6,4"
+                        VerticalAlignment="Center"
+                        Background="{DynamicResource MaterialDesignDivider}" />
 
                 <!-- Snap to grid toggle -->
-                <ToggleButton Style="{StaticResource MaterialDesignIconToggleButton}"
+                <ToggleButton Style="{StaticResource MaterialDesignFlatToggleButton}"
                               ToolTip="Snap to grid"
                               IsChecked="{Binding SnapToGrid, Mode=TwoWay}">
                     <md:PackIcon Kind="MagnetOn" Width="18" Height="18" />
                 </ToggleButton>
 
                 <!-- Show grid toggle -->
-                <ToggleButton Style="{StaticResource MaterialDesignIconToggleButton}"
+                <ToggleButton Style="{StaticResource MaterialDesignFlatToggleButton}"
                               ToolTip="Show grid"
                               IsChecked="{Binding ShowGrid, Mode=TwoWay}">
                     <md:PackIcon Kind="Grid" Width="18" Height="18" />
                 </ToggleButton>
 
-                <Separator Style="{StaticResource MaterialDesignVerticalSeparator}" Margin="6,8" />
+                <Border Width="1"
+                        Height="24"
+                        Margin="6,4"
+                        VerticalAlignment="Center"
+                        Background="{DynamicResource MaterialDesignDivider}" />
 
                 <!-- Clear cross-filters -->
                 <Button Style="{StaticResource MaterialDesignIconButton}"
@@ -89,7 +101,11 @@
                     </md:Badged>
                 </Button>
 
-                <Separator Style="{StaticResource MaterialDesignVerticalSeparator}" Margin="6,8" />
+                <Border Width="1"
+                        Height="24"
+                        Margin="6,4"
+                        VerticalAlignment="Center"
+                        Background="{DynamicResource MaterialDesignDivider}" />
 
                 <Button Content="Present"
                         Style="{StaticResource MaterialDesignFlatButton}"

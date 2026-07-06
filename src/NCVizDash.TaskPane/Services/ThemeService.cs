@@ -9,7 +9,7 @@ namespace NCVizDash.TaskPane.Services;
 /// default targets <c>System.Windows.Application.Current.Resources</c> — an object
 /// that may not exist in a VSTO host process (Excel owns the message loop, not a
 /// WPF <c>Application</c>). Instead, this service raises <see cref="ThemeChanged"/>,
-/// and <see cref="Views.ShellWindow"/> applies the change directly to its own
+/// and <see cref="Views.ShellView"/> applies the change directly to its own
 /// <c>BundledTheme</c> resource instance, which is always present and safe to mutate
 /// regardless of whether a WPF <c>Application</c> object exists.
 /// </para>
