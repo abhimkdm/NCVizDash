@@ -73,6 +73,7 @@ public sealed partial class ShellViewModel : ObservableObject
         _explorerPanel = explorerPanel;
         _canvasPanel = canvasPanel;
         _visualLibrary = visualLibrary;
+        _explorerPanel.GenerateDashboardForSource = source => GenerateDashboard(source);
 
         ActiveTheme = settings.Settings.DefaultTheme;
         CanvasPanel.ActiveTheme = ActiveTheme;

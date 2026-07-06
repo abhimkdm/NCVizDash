@@ -101,7 +101,7 @@ public sealed class NCVizDashRibbon : IRibbonExtensibility
     /// <summary>New Dashboard button.</summary>
     public void BtnNewDashboard_Click(IRibbonControl control)
     {
-        _logger.LogInformation("User requested: New Dashboard.");
+        _logger.LogInformation("User requested: Generate Dashboard.");
         NewDashboardRequested?.Invoke(this, EventArgs.Empty);
     }
 
@@ -203,10 +203,14 @@ public sealed class NCVizDashRibbon : IRibbonExtensibility
             System.Windows.Forms.MessageBoxIcon.Information);
     }
 
-    /// <summary>
-    /// Notifies Excel to repaint the ribbon toggle button pressed state.
-    /// Call this whenever <see cref="_taskPaneVisible"/> changes externally.
-    /// </summary>
+    /// <summary>Updates ribbon toggle state when the task pane is shown or hidden externally.</summary>
+    public void SetTaskPaneVisible(bool visible)
+    {
+        _taskPaneVisible = visible;
+        InvalidateTaskPaneButton();
+    }
+
+    /// <summary>Notifies Excel to repaint the task pane toggle button.</summary>
     public void InvalidateTaskPaneButton() =>
         _ribbon?.InvalidateControl("btnToggleTaskPane");
 }

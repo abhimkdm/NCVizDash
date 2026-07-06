@@ -281,27 +281,46 @@ public sealed partial class ThisAddIn
 
     private void OnTaskPaneToggleRequested(object? sender, bool visible)
     {
+        SetTaskPaneVisible(visible);
+    }
+
+    private void SetTaskPaneVisible(bool visible)
+    {
         if (_taskPane is not null)
             _taskPane.Visible = visible;
+
+        _ribbon?.SetTaskPaneVisible(visible);
     }
 
     private void OnDataRefreshRequested(object? sender, EventArgs e)
     {
         if (_serviceProvider is null) return;
+        SetTaskPaneVisible(true);
         var shell = _serviceProvider.GetRequiredService<ShellViewModel>();
         _ = shell.RefreshDataAsync(); // fire-and-forget; ViewModel owns error handling
     }
 
-    private void OnNewDashboardRequested(object? sender, EventArgs e)
+    private async void OnNewDashboardRequested(object? sender, EventArgs e)
     {
         if (_serviceProvider is null) return;
+
+        SetTaskPaneVisible(true);
+
         var shell = _serviceProvider.GetRequiredService<ShellViewModel>();
-        shell.NewDashboardCommand.Execute(null);
+
+        if (shell.ExplorerPanel.DataSources.Count == 0)
+            await shell.RefreshDataAsync();
+
+        if (shell.ExplorerPanel.DataSources.Count > 0)
+            shell.GenerateDashboardCommand.Execute(null);
+        else
+            shell.NewDashboardCommand.Execute(null);
     }
 
     private void OnOpenDashboardRequested(object? sender, EventArgs e)
     {
         if (_serviceProvider is null) return;
+        SetTaskPaneVisible(true);
         var shell = _serviceProvider.GetRequiredService<ShellViewModel>();
         _ = shell.LoadSavedDashboardsCommand.ExecuteAsync(null);
         // The task pane's Open picker (bound to ShellViewModel.SavedDashboards) becomes

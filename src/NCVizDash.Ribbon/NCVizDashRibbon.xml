@@ -14,9 +14,9 @@
         <!-- ── Dashboard group ── -->
         <group id="grpDashboard" label="Dashboard">
           <button id="btnNewDashboard"
-                  label="New Dashboard"
-                  screentip="Create a new blank dashboard"
-                  supertip="Opens the dashboard designer with an empty canvas."
+                  label="Generate Dashboard"
+                  screentip="Generate a dashboard from your data"
+                  supertip="Builds KPIs, charts, and tables automatically from the active Excel table. Opens the task pane with the result."
                   imageMso="ChartInsert"
                   size="large"
                   onAction="BtnNewDashboard_Click" />

@@ -52,6 +52,9 @@ public sealed partial class ExplorerPanelViewModel : ObservableObject
     /// </summary>
     public ObservableCollection<DataSourceDescriptor> FilteredDataSources { get; } = [];
 
+    /// <summary>Invoked when the user requests a one-click dashboard for a data source.</summary>
+    public Action<DataSourceDescriptor>? GenerateDashboardForSource { get; set; }
+
     /// <summary>Initialises the explorer with the Excel reader and analytics engine.</summary>
     public ExplorerPanelViewModel(
         ILogger<ExplorerPanelViewModel> logger,
@@ -108,6 +111,17 @@ public sealed partial class ExplorerPanelViewModel : ObservableObject
         }
     }
 
+    /// <summary>Builds a one-click dashboard from the selected data source.</summary>
+    [RelayCommand]
+    public void GenerateDashboard(DataSourceDescriptor? source)
+    {
+        var target = source ?? SelectedDataSource ?? DataSources.FirstOrDefault();
+        if (target is null || GenerateDashboardForSource is null)
+            return;
+
+        GenerateDashboardForSource(target);
+    }
+
     /// <summary>
     /// Re-reads only the data source(s) whose <see cref="DataSourceDescriptor.SheetName"/>
     /// matches, reloading them into the analytics engine in place — the
@@ -158,8 +172,13 @@ public sealed partial class ExplorerPanelViewModel : ObservableObject
     /// given data source, for display in the explorer's hover preview popup.
     /// </summary>
     [RelayCommand]
-    public async Task LoadPreviewAsync(DataSourceDescriptor source)
+    public async Task LoadPreviewAsync(DataSourceDescriptor? source)
     {
+        if (source is null)
+            return;
+
+        PreviewRows ??= [];
+
         if (PreviewSource?.Id == source.Id && PreviewRows.Count > 0)
             return; // already cached for this source
 
@@ -169,6 +188,8 @@ public sealed partial class ExplorerPanelViewModel : ObservableObject
         try
         {
             var rows = await _excelDataReader.ReadRowsAsync(source.Id);
+            if (rows is null)
+                return;
 
             PreviewRows.Clear();
             foreach (var row in rows.Take(PreviewRowLimit))
@@ -191,6 +212,7 @@ public sealed partial class ExplorerPanelViewModel : ObservableObject
     public void ClearPreview()
     {
         PreviewSource = null;
+        PreviewRows ??= [];
         PreviewRows.Clear();
     }
 

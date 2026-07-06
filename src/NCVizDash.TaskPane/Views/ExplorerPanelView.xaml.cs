@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
 using System.Windows.Threading;
 using NCVizDash.Models;
 using NCVizDash.TaskPane.ViewModels;
@@ -63,7 +64,8 @@ public sealed partial class ExplorerPanelView : System.Windows.Controls.UserCont
 
     private void DataSourceHeader_MouseEnter(object sender, MouseEventArgs e)
     {
-        if (sender is not FrameworkElement { DataContext: DataSourceDescriptor source }) return;
+        var source = GetDataSourceFromSender(sender);
+        if (source is null) return;
 
         _pendingPreviewSource = source;
         _previewHoverTimer.Stop();
@@ -78,15 +80,37 @@ public sealed partial class ExplorerPanelView : System.Windows.Controls.UserCont
         ViewModel?.ClearPreview();
     }
 
+    private static DataSourceDescriptor? GetDataSourceFromSender(object sender)
+    {
+        for (var element = sender as DependencyObject; element is not null; element = VisualTreeHelper.GetParent(element))
+        {
+            if (element is FrameworkElement { DataContext: DataSourceDescriptor source })
+                return source;
+        }
+
+        return null;
+    }
+
     private async void PreviewHoverTimer_Tick(object? sender, EventArgs e)
     {
         _previewHoverTimer.Stop();
 
-        if (_pendingPreviewSource is null || ViewModel is null) return;
+        var source = _pendingPreviewSource;
+        var viewModel = ViewModel;
+        if (source is null || viewModel is null)
+            return;
 
         PreviewPopup.PlacementTarget = this;
         PreviewPopup.IsOpen = true;
 
-        await ViewModel.LoadPreviewCommand.ExecuteAsync(_pendingPreviewSource);
+        try
+        {
+            await viewModel.LoadPreviewAsync(source);
+        }
+        catch (Exception ex)
+        {
+            PreviewPopup.IsOpen = false;
+            System.Diagnostics.Debug.WriteLine($"Preview load failed: {ex.Message}");
+        }
     }
 }

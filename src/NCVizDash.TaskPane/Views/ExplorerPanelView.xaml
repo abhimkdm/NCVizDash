@@ -54,25 +54,39 @@
                     <ItemsControl.ItemTemplate>
                         <DataTemplate DataType="{x:Type models:DataSourceDescriptor}">
                             <Expander Margin="4,2"
-                                      IsExpanded="True"
-                                      MouseEnter="DataSourceHeader_MouseEnter"
-                                      MouseLeave="DataSourceHeader_MouseLeave">
+                                      IsExpanded="True">
                                 <Expander.Header>
-                                    <StackPanel Orientation="Horizontal" behaviors:SpacingBehavior.Spacing="6">
-                                        <md:PackIcon Kind="Table"
-                                                     Width="16" Height="16"
-                                                     VerticalAlignment="Center"
-                                                     Foreground="{DynamicResource PrimaryHueMidBrush}" />
-                                        <TextBlock Text="{Binding Name}"
-                                                   FontWeight="SemiBold"
-                                                   FontSize="12"
-                                                   VerticalAlignment="Center"
-                                                   ToolTip="{Binding SourceType}" />
-                                        <TextBlock Text="{Binding RowCount, StringFormat='({0:N0} rows)'}"
-                                                   FontSize="10"
-                                                   Foreground="{DynamicResource MaterialDesignBodyLight}"
-                                                   VerticalAlignment="Center" />
-                                    </StackPanel>
+                                    <Grid MouseEnter="DataSourceHeader_MouseEnter"
+                                          MouseLeave="DataSourceHeader_MouseLeave">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0" Orientation="Horizontal" behaviors:SpacingBehavior.Spacing="6">
+                                            <md:PackIcon Kind="Table"
+                                                         Width="16" Height="16"
+                                                         VerticalAlignment="Center"
+                                                         Foreground="{DynamicResource PrimaryHueMidBrush}" />
+                                            <TextBlock Text="{Binding Name}"
+                                                       FontWeight="SemiBold"
+                                                       FontSize="12"
+                                                       VerticalAlignment="Center"
+                                                       ToolTip="{Binding SourceType}" />
+                                            <TextBlock Text="{Binding RowCount, StringFormat='({0:N0} rows)'}"
+                                                       FontSize="10"
+                                                       Foreground="{DynamicResource MaterialDesignBodyLight}"
+                                                       VerticalAlignment="Center" />
+                                        </StackPanel>
+                                        <Button Grid.Column="1"
+                                                Content="Generate"
+                                                FontSize="10"
+                                                Padding="8,2"
+                                                Margin="4,0,0,0"
+                                                VerticalAlignment="Center"
+                                                Style="{StaticResource MaterialDesignFlatButton}"
+                                                Command="{Binding DataContext.GenerateDashboardCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                CommandParameter="{Binding}" />
+                                    </Grid>
                                 </Expander.Header>
 
                                 <!-- Field list -->
