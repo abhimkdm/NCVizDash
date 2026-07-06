@@ -1,0 +1,80 @@
+<Project>
+  <!--
+    SDK-style projects import Microsoft.NET.Publish.targets after VSTO Office targets,
+    which replaces VSTO ClickOnce publish with the generic SDK copy-to-folder publish.
+    Re-assert VSTO publish targets here (Directory.Build.targets loads last).
+  -->
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'NCVizDash.ExcelAddIn'">
+    <IsPublishable>false</IsPublishable>
+    <PublishableProject>true</PublishableProject>
+    <PrepareForRunDependsOn Condition="'$(GenerateManifests)' == 'true'">
+      $(PrepareForRunDependsOn);
+      VisualStudioForApplicationsBuild;
+      RegisterOfficeAddin;
+    </PrepareForRunDependsOn>
+    <PublishDependsOn>Build;PublishOnly</PublishDependsOn>
+    <PublishOnlyDependsOn>
+      InitializePublishProperties;
+      PublishBuild;
+      BeforePublish;
+      CleanPublishFolder;
+      MakePublishFolder;
+      CopyApplicationManifestToPublishFolder;
+      GenerateDeploymentManifestForPublishing;
+      CopyPublishItems;
+      CreateBootstrapper;
+      AfterPublish
+    </PublishOnlyDependsOn>
+  </PropertyGroup>
+
+  <Target Name="FixVstoClickOnceDuplicateReferences"
+          Condition="'$(MSBuildProjectName)' == 'NCVizDash.ExcelAddIn' AND '$(GenerateManifests)' == 'true'"
+          BeforeTargets="VisualStudioForApplicationsBuild">
+    <!-- SDK-style NuGet graphs can surface the same assembly as CopyLocal=false (prerequisite)
+         and CopyLocal=true (install), which produces an invalid ClickOnce manifest. -->
+    <ItemGroup>
+      <ReferencePath Update="@(ReferencePath)"
+                     CopyLocal="true"
+                     Private="true"
+                     Condition="'%(Filename)' == 'DuckDB.NET.Bindings'
+                             Or '%(Filename)' == 'Microsoft.Data.SqlClient'
+                             Or '%(Filename)' == 'System.Buffers'
+                             Or '%(Filename)' == 'System.ComponentModel.Annotations'
+                             Or '%(Filename)' == 'System.Security.Cryptography.ProtectedData'" />
+    </ItemGroup>
+  </Target>
+
+  <Target Name="SetVstoCustomizationPath"
+          Condition="'$(MSBuildProjectName)' == 'NCVizDash.ExcelAddIn'"
+          BeforeTargets="VisualStudioForApplicationsBuild;GenerateDeploymentManifestForPublishing">
+    <PropertyGroup>
+      <TargetFileName>$(AssemblyName).dll</TargetFileName>
+      <ApplicationManifestFileName>$(TargetFileName).manifest</ApplicationManifestFileName>
+      <ApplicationManifestWithPath>$(OutDir)$(ApplicationManifestFileName)</ApplicationManifestWithPath>
+      <DeploymentManifestFileName>$(AssemblyName).vsto</DeploymentManifestFileName>
+      <AbsolutePathToCustomization>$(TargetPath)</AbsolutePathToCustomization>
+    </PropertyGroup>
+    <ItemGroup>
+      <ApplicationManifestWithPathCollection Remove="@(ApplicationManifestWithPathCollection)" />
+      <ApplicationManifestWithPathCollection Include="$(ApplicationManifestWithPath)" />
+      <DeploymentManifestWithPathCollection Remove="@(DeploymentManifestWithPathCollection)" />
+      <DeploymentManifestWithPathCollection Include="$(OutDir)$(DeploymentManifestFileName)" />
+      <DllEntryPoint Remove="@(DllEntryPoint)" />
+      <DllEntryPoint Include="$(OutDir)$(TargetFileName)" />
+      <DeploymentManifestWithPathForPublishingCollection Remove="@(DeploymentManifestWithPathForPublishingCollection)" />
+      <DeploymentManifestWithPathForPublishingCollection Include="$(VstoClickOncePublishDir)$(DeploymentManifestFileName)" Condition="'$(VstoClickOncePublishDir)' != ''" />
+    </ItemGroup>
+  </Target>
+
+  <Target Name="VstoPublish"
+          Condition="'$(MSBuildProjectName)' == 'NCVizDash.ExcelAddIn'"
+          DependsOnTargets="Build;PublishOnly" />
+
+  <Target Name="PublishOnly"
+          Condition="'$(MSBuildProjectName)' == 'NCVizDash.ExcelAddIn'"
+          DependsOnTargets="$(PublishOnlyDependsOn)" />
+
+  <Target Name="Publish"
+          Condition="'$(MSBuildProjectName)' == 'NCVizDash.ExcelAddIn'"
+          DependsOnTargets="VstoPublish" />
+</Project>

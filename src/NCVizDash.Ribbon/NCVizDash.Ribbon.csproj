@@ -34,4 +34,7 @@
     <ProjectReference Include="..\NCVizDash.Core\NCVizDash.Core.csproj" />
     <ProjectReference Include="..\NCVizDash.Models\NCVizDash.Models.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="NCVizDashRibbon.xml" />
+  </ItemGroup>
 </Project>
