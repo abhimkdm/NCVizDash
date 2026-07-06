@@ -112,13 +112,22 @@ public sealed partial class ExplorerPanelViewModel : ObservableObject
     }
 
     /// <summary>Builds a one-click dashboard from the selected data source.</summary>
-    [RelayCommand]
     public void GenerateDashboard(DataSourceDescriptor? source)
     {
         var target = source ?? SelectedDataSource ?? DataSources.FirstOrDefault();
-        if (target is null || GenerateDashboardForSource is null)
+        if (target is null)
+        {
+            _logger.LogWarning("Generate dashboard ignored: no data source.");
             return;
+        }
 
+        if (GenerateDashboardForSource is null)
+        {
+            _logger.LogWarning("Generate dashboard ignored: shell handler not wired.");
+            return;
+        }
+
+        _logger.LogInformation("Generating dashboard for '{Source}'.", target.Name);
         GenerateDashboardForSource(target);
     }
 
@@ -368,9 +377,16 @@ public sealed partial class CanvasPanelViewModel : ObservableObject
     {
         ClearSelection();
         ActiveDashboard = dashboard;
-        Widgets = new ObservableCollection<DashboardWidget>(dashboard.Widgets);
+        ReplaceWidgets(dashboard.Widgets);
         GlobalFilterManager.SetDashboard(dashboard);
         _logger.LogInformation("Dashboard '{Name}' loaded onto canvas.", dashboard.Name);
+    }
+
+    private void ReplaceWidgets(IEnumerable<DashboardWidget> widgets)
+    {
+        Widgets.Clear();
+        foreach (var widget in widgets)
+            Widgets.Add(widget);
     }
 
     /// <summary>Adds a new widget to the canvas.</summary>
@@ -576,7 +592,7 @@ public sealed partial class CanvasPanelViewModel : ObservableObject
         if (restored is null) return;
 
         ActiveDashboard.Widgets = restored;
-        Widgets = new ObservableCollection<DashboardWidget>(restored);
+        ReplaceWidgets(restored);
         ClearSelection();
     }
 
@@ -589,7 +605,7 @@ public sealed partial class CanvasPanelViewModel : ObservableObject
         if (restored is null) return;
 
         ActiveDashboard.Widgets = restored;
-        Widgets = new ObservableCollection<DashboardWidget>(restored);
+        ReplaceWidgets(restored);
         ClearSelection();
     }
 

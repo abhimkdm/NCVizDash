@@ -91,6 +91,14 @@ public sealed partial class ExplorerPanelView : System.Windows.Controls.UserCont
         return null;
     }
 
+    private void GenerateButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (GetDataSourceFromSender(sender) is not { } source)
+            return;
+
+        ViewModel?.GenerateDashboard(source);
+    }
+
     private async void PreviewHoverTimer_Tick(object? sender, EventArgs e)
     {
         _previewHoverTimer.Stop();

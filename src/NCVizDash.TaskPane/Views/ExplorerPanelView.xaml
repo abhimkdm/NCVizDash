@@ -84,8 +84,7 @@
                                                 Margin="4,0,0,0"
                                                 VerticalAlignment="Center"
                                                 Style="{StaticResource MaterialDesignFlatButton}"
-                                                Command="{Binding DataContext.GenerateDashboardCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                                CommandParameter="{Binding}" />
+                                                Click="GenerateButton_Click" />
                                     </Grid>
                                 </Expander.Header>
 
