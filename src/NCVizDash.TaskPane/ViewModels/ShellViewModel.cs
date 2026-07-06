@@ -105,6 +105,7 @@ public sealed partial class ShellViewModel : ObservableObject
         {
             await ExplorerPanel.LoadDataSourcesAsync();
             CanvasPanel.GlobalFilterBar.RefreshAvailableFields(ExplorerPanel.DataSources);
+            CanvasPanel.RequestRenderAllWidgets();
             StatusMessage = $"Refreshed at {DateTime.Now:HH:mm:ss}";
         }
         catch (Exception ex)

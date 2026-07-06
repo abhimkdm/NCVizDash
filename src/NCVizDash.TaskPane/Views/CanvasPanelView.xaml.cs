@@ -79,7 +79,12 @@ public sealed partial class CanvasPanelView : System.Windows.Controls.UserContro
         if (e.Data.GetDataPresent(ExplorerPanelView.FieldDragFormat))
         {
             if (e.Data.GetData(ExplorerPanelView.FieldDragFormat) is FieldDescriptor field)
-                ViewModel.AddWidgetFromFieldDrop(field, Guid.Empty);
+            {
+                var dataSourceId = e.Data.GetData(ExplorerPanelView.DataSourceIdDragFormat) is Guid id
+                    ? id
+                    : Guid.Empty;
+                ViewModel.AddWidgetFromFieldDrop(field, dataSourceId);
+            }
         }
     }
 

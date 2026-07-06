@@ -22,6 +22,12 @@ public sealed class ExcelDataReader : IExcelDataReader
     /// </summary>
     private readonly Dictionary<Guid, DataSourceLocation> _sourceLocations = new();
 
+    /// <summary>
+    /// Stable IDs per workbook data source (sheet + name + type) so a full refresh
+    /// does not invalidate widgets already bound via <see cref="DataSourceDescriptor.Id"/>.
+    /// </summary>
+    private readonly Dictionary<string, Guid> _stableSourceIds = new(StringComparer.OrdinalIgnoreCase);
+
     /// <summary>Initialises the reader against the live Excel Application object.</summary>
     public ExcelDataReader(Microsoft.Office.Interop.Excel.Application excelApp, ILogger<ExcelDataReader> logger)
     {
@@ -116,6 +122,7 @@ public sealed class ExcelDataReader : IExcelDataReader
             var headers = ExtractHeaders(table.HeaderRowRange);
             var descriptor = new DataSourceDescriptor
             {
+                Id = ResolveStableId(sheetName, table.Name, "ExcelTable"),
                 Name = table.Name,
                 SourceType = "ExcelTable",
                 SheetName = sheetName,
@@ -169,6 +176,7 @@ public sealed class ExcelDataReader : IExcelDataReader
 
             var descriptor = new DataSourceDescriptor
             {
+                Id = ResolveStableId(resolvedSheetName, CleanNamedRangeDisplayName(name.Name), "NamedRange"),
                 Name = CleanNamedRangeDisplayName(name.Name),
                 SourceType = "NamedRange",
                 SheetName = resolvedSheetName,
@@ -355,4 +363,16 @@ public sealed class ExcelDataReader : IExcelDataReader
 
     /// <summary>Holds the resolved Excel range + header list for a previously discovered data source.</summary>
     private sealed record DataSourceLocation(Range DataRange, IReadOnlyList<string> Headers);
+
+    private Guid ResolveStableId(string sheetName, string sourceName, string sourceType)
+    {
+        var key = $"{sheetName}\0{sourceName}\0{sourceType}";
+        if (!_stableSourceIds.TryGetValue(key, out var id))
+        {
+            id = Guid.NewGuid();
+            _stableSourceIds[key] = id;
+        }
+
+        return id;
+    }
 }

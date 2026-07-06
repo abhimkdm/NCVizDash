@@ -26,7 +26,7 @@ public sealed class AnalyticsQueryBuilderTests
 
         var sql = AnalyticsQueryBuilder.Build(spec);
 
-        Assert.Contains("SELECT \"department\", SUM(\"revenue\") AS \"revenue\"", sql);
+        Assert.Contains("SELECT \"department\" AS \"department\", SUM(\"revenue\") AS \"revenue\"", sql);
         Assert.Contains("FROM \"sales\"", sql);
         Assert.Contains("GROUP BY \"department\"", sql);
         Assert.EndsWith(";", sql);
@@ -85,8 +85,8 @@ public sealed class AnalyticsQueryBuilderTests
 
         Assert.DoesNotContain("GROUP BY", sql);
         Assert.DoesNotContain("SUM(", sql);
-        Assert.Contains("\"x\"", sql);
-        Assert.Contains("\"y\"", sql);
+        Assert.Contains("\"x\" AS \"x\"", sql);
+        Assert.Contains("\"y\" AS \"y\"", sql);
     }
 
     [Fact]

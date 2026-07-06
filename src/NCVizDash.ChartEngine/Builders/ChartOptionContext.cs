@@ -1,4 +1,5 @@
 using NCVizDash.Models;
+using NCVizDash.Core.Analytics;
 
 namespace NCVizDash.ChartEngine.Builders;
 
@@ -159,14 +160,31 @@ public sealed class ChartOptionContext
     };
 
     private static string StringValue(IReadOnlyDictionary<string, object?> row, string field) =>
-        row.TryGetValue(field, out var v) ? v?.ToString() ?? string.Empty : string.Empty;
+        TryGetRowValue(row, field, out var v) ? v?.ToString() ?? string.Empty : string.Empty;
 
     private static double? NumericValue(IReadOnlyDictionary<string, object?> row, string field)
     {
-        if (!row.TryGetValue(field, out var v) || v is null) return null;
+        if (!TryGetRowValue(row, field, out var v) || v is null) return null;
         return v is double d ? d
              : double.TryParse(v.ToString(), System.Globalization.NumberStyles.Any,
                                 System.Globalization.CultureInfo.InvariantCulture, out var parsed)
                ? parsed : null;
+    }
+
+    /// <summary>
+    /// Resolves a row value by the widget's original field name, falling back to the
+    /// sanitised DuckDB column name when the reader returned a lower-cased alias.
+    /// </summary>
+    private static bool TryGetRowValue(IReadOnlyDictionary<string, object?> row, string field, out object? value)
+    {
+        if (row.TryGetValue(field, out value))
+            return true;
+
+        var sanitized = SqlFilterTranslator.SanitiseColumnName(field);
+        if (!string.Equals(sanitized, field, StringComparison.Ordinal) && row.TryGetValue(sanitized, out value))
+            return true;
+
+        value = null;
+        return false;
     }
 }

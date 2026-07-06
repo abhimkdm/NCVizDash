@@ -20,6 +20,9 @@ public sealed partial class ExplorerPanelView : System.Windows.Controls.UserCont
     /// <summary>Clipboard/drag-drop data format identifying a dragged <see cref="FieldDescriptor"/>.</summary>
     public const string FieldDragFormat = "NCVizDash.Field";
 
+    /// <summary>Drag-drop payload carrying the owning data source id for a field.</summary>
+    public const string DataSourceIdDragFormat = "NCVizDash.DataSourceId";
+
     private Point _dragStartPoint;
     private readonly DispatcherTimer _previewHoverTimer;
     private DataSourceDescriptor? _pendingPreviewSource;
@@ -56,7 +59,9 @@ public sealed partial class ExplorerPanelView : System.Windows.Controls.UserCont
             Math.Abs(diff.Y) < SystemParameters.MinimumVerticalDragDistance)
             return;
 
+        var dataSourceId = GetDataSourceFromSender(element)?.Id ?? Guid.Empty;
         var data = new DataObject(FieldDragFormat, field);
+        data.SetData(DataSourceIdDragFormat, dataSourceId);
         DragDrop.DoDragDrop(element, data, DragDropEffects.Copy);
     }
 
@@ -91,12 +96,19 @@ public sealed partial class ExplorerPanelView : System.Windows.Controls.UserCont
         return null;
     }
 
-    private void GenerateButton_Click(object sender, RoutedEventArgs e)
+    private async void GenerateButton_Click(object sender, RoutedEventArgs e)
     {
         if (GetDataSourceFromSender(sender) is not { } source)
             return;
 
-        ViewModel?.GenerateDashboard(source);
+        try
+        {
+            await (ViewModel?.GenerateDashboardAsync(source) ?? Task.CompletedTask);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Generate dashboard failed: {ex.Message}");
+        }
     }
 
     private async void PreviewHoverTimer_Tick(object? sender, EventArgs e)

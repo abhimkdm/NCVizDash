@@ -142,6 +142,9 @@ public sealed class ChartHost : System.Windows.Controls.UserControl
     /// </summary>
     public async Task RenderAsync(string payloadJson)
     {
+        if (_webView is null)
+            await InitializeAsync();
+
         if (_webView?.CoreWebView2 is null)
         {
             _pendingPayload = payloadJson;

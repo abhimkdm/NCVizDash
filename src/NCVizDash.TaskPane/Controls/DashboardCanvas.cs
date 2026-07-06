@@ -523,14 +523,24 @@ public sealed class DashboardCanvas : System.Windows.Controls.Panel
         {
             oldVm.Widgets.CollectionChanged -= canvas.OnWidgetsChanged;
             oldVm.DataSourceRefreshed -= canvas.OnDataSourceRefreshed;
+            oldVm.RenderAllWidgetsRequested -= canvas.OnRenderAllWidgetsRequested;
         }
 
         if (e.NewValue is CanvasPanelViewModel newVm)
         {
             newVm.Widgets.CollectionChanged += canvas.OnWidgetsChanged;
             newVm.DataSourceRefreshed += canvas.OnDataSourceRefreshed;
-            canvas.RebuildChildren();
+            newVm.RenderAllWidgetsRequested += canvas.OnRenderAllWidgetsRequested;
+            canvas.ScheduleRebuildChildren();
         }
+    }
+
+    private void OnRenderAllWidgetsRequested(object? sender, EventArgs e)
+    {
+        _ = Dispatcher.BeginInvoke(new Action(() =>
+        {
+            _ = RenderAllWidgetsAsync();
+        }), System.Windows.Threading.DispatcherPriority.ApplicationIdle);
     }
 
     /// <summary>
@@ -608,9 +618,23 @@ public sealed class DashboardCanvas : System.Windows.Controls.Panel
 
     private void OnWidgetsChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
     {
-        RebuildChildren();
-        InvalidateMeasure();
-        InvalidateArrange();
+        ScheduleRebuildChildren();
+    }
+
+    private bool _rebuildScheduled;
+
+    private void ScheduleRebuildChildren()
+    {
+        if (_rebuildScheduled) return;
+        _rebuildScheduled = true;
+
+        Dispatcher.BeginInvoke(new Action(() =>
+        {
+            _rebuildScheduled = false;
+            RebuildChildren();
+            InvalidateMeasure();
+            InvalidateArrange();
+        }), System.Windows.Threading.DispatcherPriority.Loaded);
     }
 
     /// <summary>

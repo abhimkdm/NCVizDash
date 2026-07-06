@@ -112,7 +112,7 @@ public sealed partial class ExplorerPanelViewModel : ObservableObject
     }
 
     /// <summary>Builds a one-click dashboard from the selected data source.</summary>
-    public void GenerateDashboard(DataSourceDescriptor? source)
+    public async Task GenerateDashboardAsync(DataSourceDescriptor? source)
     {
         var target = source ?? SelectedDataSource ?? DataSources.FirstOrDefault();
         if (target is null)
@@ -127,8 +127,24 @@ public sealed partial class ExplorerPanelViewModel : ObservableObject
             return;
         }
 
+        await EnsureDataSourceLoadedAsync(target);
+
         _logger.LogInformation("Generating dashboard for '{Source}'.", target.Name);
         GenerateDashboardForSource(target);
+    }
+
+    /// <summary>
+    /// Ensures the given descriptor's rows are present in the analytics engine,
+    /// reloading from Excel when a widget render would otherwise see an empty table.
+    /// </summary>
+    public async Task EnsureDataSourceLoadedAsync(DataSourceDescriptor source, CancellationToken ct = default)
+    {
+        if (_analyticsEngine.GetTableName(source.Id) is not null)
+            return;
+
+        _logger.LogInformation("Data source '{Source}' not in analytics engine — loading now.", source.Name);
+        var rows = await _excelDataReader.ReadRowsAsync(source.Id, ct);
+        await _analyticsEngine.LoadDataSourceAsync(source, rows, ct);
     }
 
     /// <summary>
@@ -379,8 +395,18 @@ public sealed partial class CanvasPanelViewModel : ObservableObject
         ActiveDashboard = dashboard;
         ReplaceWidgets(dashboard.Widgets);
         GlobalFilterManager.SetDashboard(dashboard);
+        RequestRenderAllWidgets();
         _logger.LogInformation("Dashboard '{Name}' loaded onto canvas.", dashboard.Name);
     }
+
+    /// <summary>
+    /// Raised after widgets are bulk-replaced so the canvas can render once the
+    /// visual tree has settled (avoids racing WebView2 initialisation).
+    /// </summary>
+    public event EventHandler? RenderAllWidgetsRequested;
+
+    /// <summary>Asks the canvas to re-render every widget (e.g. after a data refresh).</summary>
+    public void RequestRenderAllWidgets() => RenderAllWidgetsRequested?.Invoke(this, EventArgs.Empty);
 
     private void ReplaceWidgets(IEnumerable<DashboardWidget> widgets)
     {
