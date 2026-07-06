@@ -73,7 +73,10 @@ public sealed partial class ShellViewModel : ObservableObject
         _explorerPanel = explorerPanel;
         _canvasPanel = canvasPanel;
         _visualLibrary = visualLibrary;
-        _explorerPanel.GenerateDashboardForSource = source => GenerateDashboard(source);
+        _explorerPanel.GenerateDashboardForSource = GenerateDashboardAsync;
+        _canvasPanel.ResolveDataSourceId = id => id != Guid.Empty
+            ? id
+            : _explorerPanel.DataSources.FirstOrDefault()?.Id ?? Guid.Empty;
 
         ActiveTheme = settings.Settings.DefaultTheme;
         CanvasPanel.ActiveTheme = ActiveTheme;
@@ -127,7 +130,7 @@ public sealed partial class ShellViewModel : ObservableObject
     /// pie, and summary table — no AI, no configuration.
     /// </summary>
     [RelayCommand]
-    public void GenerateDashboard(DataSourceDescriptor? source = null)
+    public async Task GenerateDashboardAsync(DataSourceDescriptor? source = null)
     {
         var target = source ?? ExplorerPanel.DataSources.FirstOrDefault();
         if (target is null)
@@ -136,10 +139,28 @@ public sealed partial class ShellViewModel : ObservableObject
             return;
         }
 
-        var dashboard = _dashboardGenerator.Generate(target);
-        CanvasPanel.OpenDashboard(dashboard);
-        StatusMessage = $"Generated dashboard with {dashboard.Widgets.Count} widget(s) from '{target.Name}'.";
-        _logger.LogInformation("One-click dashboard generated from '{Source}'.", target.Name);
+        IsLoading = true;
+        StatusMessage = $"Generating dashboard from '{target.Name}'…";
+        _logger.LogInformation("One-click dashboard generation started for '{Source}'.", target.Name);
+
+        try
+        {
+            await ExplorerPanel.EnsureDataSourceLoadedAsync(target);
+
+            var dashboard = _dashboardGenerator.Generate(target);
+            CanvasPanel.OpenDashboard(dashboard);
+            StatusMessage = $"Generated dashboard with {dashboard.Widgets.Count} widget(s) from '{target.Name}'.";
+            _logger.LogInformation("One-click dashboard generated from '{Source}'.", target.Name);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Dashboard generation failed for '{Source}'.", target.Name);
+            StatusMessage = $"Generate failed: {ex.Message}";
+        }
+        finally
+        {
+            IsLoading = false;
+        }
     }
 
     // ── Templates (Phase 11) ──────────────────────────────────────────────────

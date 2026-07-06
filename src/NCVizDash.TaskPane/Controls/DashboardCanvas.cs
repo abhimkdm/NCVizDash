@@ -283,32 +283,78 @@ public sealed class DashboardCanvas : System.Windows.Controls.Panel
             return;
         }
 
-        var isAdditive = (Keyboard.Modifiers & ModifierKeys.Control) != 0;
-        ViewModel?.SelectWidget(hit, isAdditive);
+        BeginWidgetInteraction(hit, pos, resize: IsResizeHandleHit(hit, pos), e);
+    }
 
-        // Determine whether the click landed in the resize handle (bottom-right corner).
-        var cardBounds = GetWidgetPixelBounds(hit);
+    /// <summary>
+    /// Starts a move or resize gesture for a widget (from the canvas or a card title bar).
+    /// </summary>
+    internal void BeginWidgetInteraction(
+        DashboardWidget widget,
+        Point canvasPos,
+        bool resize,
+        MouseButtonEventArgs e)
+    {
+        ResetInteractionState();
+
+        var isAdditive = (Keyboard.Modifiers & ModifierKeys.Control) != 0;
+        ViewModel?.SelectWidget(widget, isAdditive);
+
+        _dragWidget = widget;
+        _dragStartMouse = canvasPos;
+        _dragStartLayout = new WidgetLayout
+        {
+            Column = widget.Layout.Column,
+            Row = widget.Layout.Row,
+            ColumnSpan = widget.Layout.ColumnSpan,
+            RowSpan = widget.Layout.RowSpan
+        };
+
+        _dragMode = resize ? DragMode.Resize : DragMode.Move;
+
+        if (ViewModel?.ActiveDashboard is { } dashboard)
+            ViewModel.UndoRedo.RecordSnapshot(dashboard);
+
+        CaptureMouse();
+        e.Handled = true;
+    }
+
+    /// <summary>Clears any in-progress move/resize/rubber-band gesture.</summary>
+    public void ResetInteractionState()
+    {
+        if (IsMouseCaptured)
+            ReleaseMouseCapture();
+
+        ClearDragState();
+    }
+
+    /// <inheritdoc/>
+    protected override void OnLostMouseCapture(MouseEventArgs e)
+    {
+        if (_dragMode != DragMode.None)
+            ClearDragState();
+
+        base.OnLostMouseCapture(e);
+    }
+
+    private void ClearDragState()
+    {
+        _dragMode = DragMode.None;
+        _dragWidget = null;
+        _dragStartLayout = null;
+        ViewModel?.ClearGuides();
+        InvalidateVisual();
+    }
+
+    private bool IsResizeHandleHit(DashboardWidget widget, Point canvasPos)
+    {
+        var cardBounds = GetWidgetPixelBounds(widget);
         var handleRect = new Rect(
             cardBounds.Right - ResizeHandleSize,
             cardBounds.Bottom - ResizeHandleSize,
             ResizeHandleSize, ResizeHandleSize);
 
-        _dragWidget = hit;
-        _dragStartMouse = pos;
-        _dragStartLayout = new WidgetLayout
-        {
-            Column = hit.Layout.Column,
-            Row = hit.Layout.Row,
-            ColumnSpan = hit.Layout.ColumnSpan,
-            RowSpan = hit.Layout.RowSpan
-        };
-
-        _dragMode = handleRect.Contains(pos) ? DragMode.Resize : DragMode.Move;
-
-        if (ViewModel?.ActiveDashboard is { } dashboard)
-            ViewModel.UndoRedo.RecordSnapshot(dashboard);
-        CaptureMouse();
-        e.Handled = true;
+        return handleRect.Contains(canvasPos);
     }
 
     /// <inheritdoc/>
@@ -645,6 +691,8 @@ public sealed class DashboardCanvas : System.Windows.Controls.Panel
     /// </summary>
     private void RebuildChildren()
     {
+        ResetInteractionState();
+
         foreach (var card in _cardsByWidgetId.Values)
             card.Cleanup();
         _cardsByWidgetId.Clear();

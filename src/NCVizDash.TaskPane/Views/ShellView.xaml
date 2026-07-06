@@ -126,5 +126,28 @@
                        FontSize="11"
                        Foreground="{DynamicResource MaterialDesignBodyLight}" />
         </Border>
+
+        <!-- Full-pane loading overlay (refresh / generate dashboard) -->
+        <Border Grid.RowSpan="3"
+                Background="#AAFAFAFA"
+                Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <StackPanel HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        behaviors:SpacingBehavior.Spacing="16">
+                <ProgressBar Style="{StaticResource MaterialDesignCircularProgressBar}"
+                             Value="0"
+                             IsIndeterminate="True"
+                             Width="52"
+                             Height="52" />
+                <TextBlock Text="{Binding StatusMessage}"
+                           FontSize="13"
+                           FontWeight="SemiBold"
+                           Foreground="{DynamicResource MaterialDesignBody}"
+                           HorizontalAlignment="Center"
+                           TextAlignment="Center"
+                           MaxWidth="360"
+                           TextWrapping="Wrap" />
+            </StackPanel>
+        </Border>
     </Grid>
 </UserControl>

@@ -40,8 +40,7 @@
                                  Cursor="Hand"
                                  md:ElevationAssist.Elevation="Dp1"
                                  ToolTip="{Binding DisplayName}"
-                                 PreviewMouseLeftButtonDown="VisualTile_PreviewMouseLeftButtonDown"
-                                 MouseMove="VisualTile_MouseMove">
+                                 PreviewMouseLeftButtonDown="VisualTile_PreviewMouseLeftButtonDown">
                             <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="*" />

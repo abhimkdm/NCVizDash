@@ -6,7 +6,6 @@ using System.Windows.Threading;
 using NCVizDash.Models;
 using NCVizDash.TaskPane.ViewModels;
 using Point = System.Windows.Point;
-using Size = System.Windows.Size;
 
 namespace NCVizDash.TaskPane.Views;
 
@@ -27,15 +26,20 @@ public sealed partial class ExplorerPanelView : System.Windows.Controls.UserCont
     private readonly DispatcherTimer _previewHoverTimer;
     private DataSourceDescriptor? _pendingPreviewSource;
 
+    private FieldDescriptor? _pendingDragField;
+    private DataSourceDescriptor? _pendingDragSource;
+    private FrameworkElement? _dragCaptureElement;
+
     /// <summary>Initialises the view.</summary>
     public ExplorerPanelView()
     {
         InitializeComponent();
 
-        // Small delay before showing the preview popup so a quick mouse pass-over
-        // doesn't fire an unnecessary data read.
         _previewHoverTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(450) };
         _previewHoverTimer.Tick += PreviewHoverTimer_Tick;
+
+        PreviewMouseMove += OnFieldDragPreviewMouseMove;
+        PreviewMouseLeftButtonUp += OnFieldDragPreviewMouseLeftButtonUp;
     }
 
     private ExplorerPanelViewModel? ViewModel => DataContext as ExplorerPanelViewModel;
@@ -44,13 +48,26 @@ public sealed partial class ExplorerPanelView : System.Windows.Controls.UserCont
 
     private void FieldRow_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
+        if (sender is not FrameworkElement { DataContext: FieldDescriptor field } element)
+            return;
+
         _dragStartPoint = e.GetPosition(null);
+        _pendingDragField = field;
+        _pendingDragSource = GetDataSourceForField(element);
+        _dragCaptureElement = element;
+        element.CaptureMouse();
     }
 
-    private void FieldRow_MouseMove(object sender, MouseEventArgs e)
+    private void OnFieldDragPreviewMouseMove(object sender, MouseEventArgs e)
     {
-        if (e.LeftButton != MouseButtonState.Pressed) return;
-        if (sender is not FrameworkElement { DataContext: FieldDescriptor field } element) return;
+        if (_dragCaptureElement is null || _pendingDragField is null)
+            return;
+
+        if (e.LeftButton != MouseButtonState.Pressed)
+        {
+            CancelFieldDrag();
+            return;
+        }
 
         var current = e.GetPosition(null);
         var diff = _dragStartPoint - current;
@@ -59,10 +76,26 @@ public sealed partial class ExplorerPanelView : System.Windows.Controls.UserCont
             Math.Abs(diff.Y) < SystemParameters.MinimumVerticalDragDistance)
             return;
 
-        var dataSourceId = GetDataSourceFromSender(element)?.Id ?? Guid.Empty;
+        var field = _pendingDragField;
+        var source = _pendingDragSource;
+        var element = _dragCaptureElement;
+
+        CancelFieldDrag();
+
         var data = new DataObject(FieldDragFormat, field);
-        data.SetData(DataSourceIdDragFormat, dataSourceId);
+        data.SetData(DataSourceIdDragFormat, source?.Id ?? Guid.Empty);
         DragDrop.DoDragDrop(element, data, DragDropEffects.Copy);
+    }
+
+    private void OnFieldDragPreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e) =>
+        CancelFieldDrag();
+
+    private void CancelFieldDrag()
+    {
+        _dragCaptureElement?.ReleaseMouseCapture();
+        _dragCaptureElement = null;
+        _pendingDragField = null;
+        _pendingDragSource = null;
     }
 
     // ── Hover data preview ────────────────────────────────────────────────────
@@ -87,27 +120,43 @@ public sealed partial class ExplorerPanelView : System.Windows.Controls.UserCont
 
     private static DataSourceDescriptor? GetDataSourceFromSender(object sender)
     {
-        for (var element = sender as DependencyObject; element is not null; element = VisualTreeHelper.GetParent(element))
+        if (sender is FrameworkElement { DataContext: DataSourceDescriptor direct })
+            return direct;
+
+        return GetDataSourceForField(sender as DependencyObject);
+    }
+
+    /// <summary>Walks the visual tree to find the owning <see cref="DataSourceDescriptor"/>.</summary>
+    private static DataSourceDescriptor? GetDataSourceForField(DependencyObject? start)
+    {
+        for (var element = start; element is not null; element = VisualTreeHelper.GetParent(element))
         {
             if (element is FrameworkElement { DataContext: DataSourceDescriptor source })
                 return source;
+
+            if (element is Expander expander && expander.DataContext is DataSourceDescriptor expanderSource)
+                return expanderSource;
         }
 
         return null;
     }
 
-    private async void GenerateButton_Click(object sender, RoutedEventArgs e)
+    /// <summary>
+    /// Prevents the Expander from toggling when the user clicks the Generate button
+    /// in the header (WPF routes header clicks to the expand/collapse handler).
+    /// </summary>
+    private void Expander_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
-        if (GetDataSourceFromSender(sender) is not { } source)
+        if (e.OriginalSource is not DependencyObject origin)
             return;
 
-        try
+        for (var element = origin; element is not null; element = VisualTreeHelper.GetParent(element))
         {
-            await (ViewModel?.GenerateDashboardAsync(source) ?? Task.CompletedTask);
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"Generate dashboard failed: {ex.Message}");
+            if (element is Button)
+            {
+                e.Handled = true;
+                return;
+            }
         }
     }
 

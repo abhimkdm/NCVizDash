@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Windows;
+using System.Windows.Input;
 using System.Windows.Media;
 using Microsoft.Extensions.Logging;
 using NCVizDash.Models;
@@ -73,6 +74,41 @@ public sealed class WidgetCard : FrameworkElement
         _chartHost = new ChartHost(chartHostLogger);
         AddVisualChild(_chartHost);
         AddLogicalChild(_chartHost);
+
+        PreviewMouseLeftButtonDown += OnPreviewMouseLeftButtonDown;
+    }
+
+    /// <summary>
+    /// Title bar and resize grip live outside the WebView2 body — handle them here
+    /// so chart HWND input does not block move/resize after a widget is dropped.
+    /// </summary>
+    private void OnPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (e.Handled) return;
+
+        var pos = e.GetPosition(this);
+        var onTitleBar = pos.Y <= TitleBarHeight + 2;
+        var onResizeGrip = pos.X >= ActualWidth - ResizeHandleSize - 6
+                        && pos.Y >= ActualHeight - ResizeHandleSize - 6;
+
+        if (!onTitleBar && !onResizeGrip) return;
+
+        if (FindParent<DashboardCanvas>(this) is not DashboardCanvas canvas) return;
+
+        canvas.BeginWidgetInteraction(Widget, e.GetPosition(canvas), resize: onResizeGrip, e);
+    }
+
+    private static T? FindParent<T>(DependencyObject? child) where T : DependencyObject
+    {
+        for (var parent = child is null ? null : VisualTreeHelper.GetParent(child);
+             parent is not null;
+             parent = VisualTreeHelper.GetParent(parent))
+        {
+            if (parent is T match)
+                return match;
+        }
+
+        return null;
     }
 
     /// <summary>
@@ -123,11 +159,11 @@ public sealed class WidgetCard : FrameworkElement
     /// <inheritdoc/>
     protected override Size ArrangeOverride(Size finalSize)
     {
-        // Body area: below the title bar, inset by the 2px card margin used in OnRender.
+        // Leave the bottom-right resize grip outside the WebView2 hit region.
         var bodyRect = new Rect(
             4, TitleBarHeight + 2,
             Math.Max(0, finalSize.Width - 8),
-            Math.Max(0, finalSize.Height - TitleBarHeight - 6));
+            Math.Max(0, finalSize.Height - TitleBarHeight - ResizeHandleSize - 8));
 
         _chartHost.Arrange(bodyRect);
         return finalSize;

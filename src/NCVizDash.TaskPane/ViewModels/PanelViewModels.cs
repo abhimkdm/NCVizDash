@@ -45,6 +45,15 @@ public sealed partial class ExplorerPanelViewModel : ObservableObject
     [ObservableProperty]
     private bool _isPreviewLoading;
 
+    [ObservableProperty]
+    private bool _isGeneratingDashboard;
+
+    [ObservableProperty]
+    private string _generatingStatusMessage = string.Empty;
+
+    /// <summary>True while data is loading or a dashboard is being generated.</summary>
+    public bool IsBusy => IsLoading || IsGeneratingDashboard;
+
     /// <summary>
     /// The set of data sources currently visible in the explorer tree, after
     /// applying <see cref="SearchText"/>. The view binds to this rather than
@@ -53,7 +62,7 @@ public sealed partial class ExplorerPanelViewModel : ObservableObject
     public ObservableCollection<DataSourceDescriptor> FilteredDataSources { get; } = [];
 
     /// <summary>Invoked when the user requests a one-click dashboard for a data source.</summary>
-    public Action<DataSourceDescriptor>? GenerateDashboardForSource { get; set; }
+    public Func<DataSourceDescriptor, Task>? GenerateDashboardForSource { get; set; }
 
     /// <summary>Initialises the explorer with the Excel reader and analytics engine.</summary>
     public ExplorerPanelViewModel(
@@ -111,10 +120,15 @@ public sealed partial class ExplorerPanelViewModel : ObservableObject
         }
     }
 
+    partial void OnIsLoadingChanged(bool value) => OnPropertyChanged(nameof(IsBusy));
+
+    partial void OnIsGeneratingDashboardChanged(bool value) => OnPropertyChanged(nameof(IsBusy));
+
     /// <summary>Builds a one-click dashboard from the selected data source.</summary>
-    public async Task GenerateDashboardAsync(DataSourceDescriptor? source)
+    [RelayCommand]
+    private async Task GenerateForSourceAsync(DataSourceDescriptor? source)
     {
-        var target = source ?? SelectedDataSource ?? DataSources.FirstOrDefault();
+        var target = ResolveDataSource(source);
         if (target is null)
         {
             _logger.LogWarning("Generate dashboard ignored: no data source.");
@@ -127,10 +141,33 @@ public sealed partial class ExplorerPanelViewModel : ObservableObject
             return;
         }
 
-        await EnsureDataSourceLoadedAsync(target);
+        IsGeneratingDashboard = true;
+        GeneratingStatusMessage = $"Building dashboard from {target.Name}…";
 
-        _logger.LogInformation("Generating dashboard for '{Source}'.", target.Name);
-        GenerateDashboardForSource(target);
+        try
+        {
+            _logger.LogInformation("Generating dashboard for '{Source}'.", target.Name);
+            await GenerateDashboardForSource(target);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to generate dashboard for '{Source}'.", target.Name);
+            throw;
+        }
+        finally
+        {
+            IsGeneratingDashboard = false;
+            GeneratingStatusMessage = string.Empty;
+        }
+    }
+
+    /// <summary>Resolves a template-bound descriptor to the live instance in <see cref="DataSources"/>.</summary>
+    private DataSourceDescriptor? ResolveDataSource(DataSourceDescriptor? source)
+    {
+        var candidate = source ?? SelectedDataSource ?? DataSources.FirstOrDefault();
+        if (candidate is null) return null;
+
+        return DataSources.FirstOrDefault(d => d.Id == candidate.Id) ?? candidate;
     }
 
     /// <summary>
@@ -315,6 +352,12 @@ public sealed partial class CanvasPanelViewModel : ObservableObject
 
     /// <summary>Drives full-screen Story Mode presentations (v2.0 Feature 3).</summary>
     public NCVizDash.TaskPane.Presentation.PresentationController Presentation { get; }
+
+    /// <summary>
+    /// Optional fallback when a field drop does not carry a data source id
+    /// (e.g. resolves to the first loaded explorer source).
+    /// </summary>
+    public Func<Guid, Guid>? ResolveDataSourceId { get; set; }
 
     /// <summary>
     /// Raised when a specific data source has been selectively reloaded (v2.0 Live

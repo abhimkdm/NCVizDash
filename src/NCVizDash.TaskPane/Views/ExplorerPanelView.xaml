@@ -33,7 +33,7 @@
                              Height="2"
                              VerticalAlignment="Bottom"
                              Style="{StaticResource MaterialDesignLinearProgressBar}"
-                             Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                             Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}" />
             </Grid>
         </Border>
 
@@ -54,9 +54,12 @@
                     <ItemsControl.ItemTemplate>
                         <DataTemplate DataType="{x:Type models:DataSourceDescriptor}">
                             <Expander Margin="4,2"
-                                      IsExpanded="True">
+                                      IsExpanded="True"
+                                      PreviewMouseLeftButtonDown="Expander_PreviewMouseLeftButtonDown">
                                 <Expander.Header>
-                                    <Grid MouseEnter="DataSourceHeader_MouseEnter"
+                                    <!-- Explicit DataContext — Expander.Header does not always inherit the item context. -->
+                                    <Grid DataContext="{Binding}"
+                                          MouseEnter="DataSourceHeader_MouseEnter"
                                           MouseLeave="DataSourceHeader_MouseLeave">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*" />
@@ -84,7 +87,9 @@
                                                 Margin="4,0,0,0"
                                                 VerticalAlignment="Center"
                                                 Style="{StaticResource MaterialDesignFlatButton}"
-                                                Click="GenerateButton_Click" />
+                                                Command="{Binding DataContext.GenerateForSourceCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                CommandParameter="{Binding}"
+                                                ToolTip="Generate a dashboard from this data source" />
                                     </Grid>
                                 </Expander.Header>
 
@@ -97,8 +102,7 @@
                                                     CornerRadius="4"
                                                     Cursor="Hand"
                                                     Background="Transparent"
-                                                    PreviewMouseLeftButtonDown="FieldRow_PreviewMouseLeftButtonDown"
-                                                    MouseMove="FieldRow_MouseMove">
+                                                    PreviewMouseLeftButtonDown="FieldRow_PreviewMouseLeftButtonDown">
                                                 <Border.Style>
                                                     <Style TargetType="Border">
                                                         <Style.Triggers>

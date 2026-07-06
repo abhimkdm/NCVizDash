@@ -191,7 +191,12 @@
                       Background="#FAFAFA">
 
             <!-- Minimum canvas size is always at least the scroll-viewer's viewport -->
-            <Grid MinWidth="960" MinHeight="640">
+            <Grid MinWidth="960" MinHeight="640"
+                  AllowDrop="True"
+                  DragEnter="Canvas_DragEnter"
+                  DragOver="Canvas_DragOver"
+                  DragLeave="Canvas_DragLeave"
+                  Drop="Canvas_Drop">
 
                 <!-- DashboardCanvas — the custom panel that owns move/resize/select -->
                 <ctrl:DashboardCanvas x:Name="TheCanvas"
@@ -202,11 +207,6 @@
                                       FilterManager="{Binding FilterManager}"
                                       GlobalFilterManager="{Binding GlobalFilterManager}"
                                       Theme="{Binding ActiveTheme}"
-                                      AllowDrop="True"
-                                      DragEnter="Canvas_DragEnter"
-                                      DragOver="Canvas_DragOver"
-                                      DragLeave="Canvas_DragLeave"
-                                      Drop="Canvas_Drop"
                                       KeyDown="Canvas_KeyDown"
                                       Focusable="True" />
 

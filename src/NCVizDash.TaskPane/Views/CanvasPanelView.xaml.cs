@@ -64,6 +64,7 @@ public sealed partial class CanvasPanelView : System.Windows.Controls.UserContro
     {
         TheCanvas.BorderBrush = DragIdle;
         TheCanvas.BorderThickness = new Thickness(0);
+        TheCanvas.ResetInteractionState();
 
         if (ViewModel is null) return;
 
@@ -83,7 +84,8 @@ public sealed partial class CanvasPanelView : System.Windows.Controls.UserContro
                 var dataSourceId = e.Data.GetData(ExplorerPanelView.DataSourceIdDragFormat) is Guid id
                     ? id
                     : Guid.Empty;
-                ViewModel.AddWidgetFromFieldDrop(field, dataSourceId);
+                var resolvedId = ViewModel.ResolveDataSourceId?.Invoke(dataSourceId) ?? dataSourceId;
+                ViewModel.AddWidgetFromFieldDrop(field, resolvedId);
             }
         }
     }
