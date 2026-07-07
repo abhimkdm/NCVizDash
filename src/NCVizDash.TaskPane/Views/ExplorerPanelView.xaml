@@ -14,8 +14,6 @@
         <Grid.RowDefinitions>
             <!-- Panel header -->
             <RowDefinition Height="40" />
-            <!-- Search box -->
-            <RowDefinition Height="48" />
             <!-- Tree / list -->
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
@@ -48,7 +46,7 @@
                  FontSize="12" />
 
         <!-- Data source list with field expansion -->
-        <Grid Grid.Row="2">
+        <Grid Grid.Row="1">
             <ScrollViewer VerticalScrollBarVisibility="Auto">
                 <ItemsControl ItemsSource="{Binding FilteredDataSources}">
                     <ItemsControl.ItemTemplate>

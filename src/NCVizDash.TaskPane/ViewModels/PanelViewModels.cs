@@ -459,7 +459,7 @@ public sealed partial class CanvasPanelViewModel : ObservableObject
         UndoRedo.StateChanged += (_, _) => { CanUndo = UndoRedo.CanUndo; CanRedo = UndoRedo.CanRedo; };
     }
 
-    /// <summary>Loads a dashboard onto the canvas.</summary>
+   /// <summary>Loads a dashboard onto the canvas.</summary>
     [RelayCommand]
     public void OpenDashboard(Dashboard dashboard)
     {
@@ -467,10 +467,18 @@ public sealed partial class CanvasPanelViewModel : ObservableObject
         ActiveDashboard = dashboard;
         ReplaceWidgets(dashboard.Widgets);
         GlobalFilterManager.SetDashboard(dashboard);
+
+        // Cross-filters (unlike global filters, which SetDashboard above already
+        // rebinds per-dashboard) have no concept of which dashboard or data source
+        // they belong to — a filter set by clicking a chart on one dashboard would
+        // otherwise silently carry over onto the next dashboard's widgets, causing
+        // a DuckDB "column not found" error the moment the field names don't match
+        // (e.g. a Region filter from a Sales dashboard applied to Jira ticket data).
+        FilterManager.ClearAll();
+
         RequestRenderAllWidgets();
         _logger.LogInformation("Dashboard '{Name}' loaded onto canvas.", dashboard.Name);
     }
-
     /// <summary>
     /// Raised after widgets are bulk-replaced so the canvas can render once the
     /// visual tree has settled (avoids racing WebView2 initialisation).

@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using NCVizDash.Models;
 
 namespace NCVizDash.Core.Classification;
@@ -47,12 +48,12 @@ public static class FieldTypeClassifier
         //    for cases where Excel stored a date/number as text).
         if (clrType == typeof(string))
         {
-            var lower = columnName.ToLowerInvariant();
+            var words = SplitIntoWords(columnName);
 
-            if (TimeNameHints.Any(h => lower.Contains(h)))
+            if (TimeNameHints.Any(h => words.Contains(h)))
                 return FieldType.Time;
 
-            if (BooleanNameHints.Any(h => lower.StartsWith(h) || lower.Contains($"_{h}")))
+            if (BooleanNameHints.Any(h => words.Contains(h)))
                 return FieldType.Filter;
 
             return FieldType.Dimension;
@@ -97,5 +98,20 @@ public static class FieldTypeClassifier
         var lower = columnName.ToLowerInvariant().Trim();
         return lower == "id" || lower.EndsWith("id") || lower.EndsWith("_id") ||
                lower.EndsWith("code") || lower.EndsWith("number") || lower.EndsWith("no");
+    }
+
+    /// <summary>
+    /// Splits a PascalCase/camelCase/snake_case column name into individual lowercase
+    /// words, so name-hint matching compares whole words rather than raw substrings.
+    /// This is what prevents "IssueType" from matching the "is" boolean hint (it
+    /// splits into ["issue", "type"], neither of which equals "is") while still
+    /// correctly matching "IsActive" (splits into ["is", "active"]).
+    /// </summary>
+    private static string[] SplitIntoWords(string name)
+    {
+        var spaced = Regex.Replace(name, "(?<!^)(?=[A-Z])", " ");
+        return spaced.Split(['_', ' ', '-'], StringSplitOptions.RemoveEmptyEntries)
+                     .Select(w => w.ToLowerInvariant())
+                     .ToArray();
     }
 }

@@ -58,15 +58,6 @@
                             Padding="4">
                         <md:PackIcon Kind="OpenInNew" Width="20" Height="20" />
                     </Button>
-
-                    <TextBlock Text="Dark"
-                               Foreground="White"
-                               VerticalAlignment="Center"
-                               FontSize="12" />
-                    <ToggleButton Style="{StaticResource MaterialDesignSwitchToggleButton}"
-                                  ToolTip="Toggle Light / Dark theme"
-                                  Command="{Binding ApplyThemeCommand}"
-                                  CommandParameter="Dark" />
                 </StackPanel>
             </Grid>
         </Border>
