@@ -570,6 +570,7 @@ public sealed class DashboardCanvas : System.Windows.Controls.Panel
             oldVm.Widgets.CollectionChanged -= canvas.OnWidgetsChanged;
             oldVm.DataSourceRefreshed -= canvas.OnDataSourceRefreshed;
             oldVm.RenderAllWidgetsRequested -= canvas.OnRenderAllWidgetsRequested;
+            oldVm.WidgetDataSourceChanged -= canvas.OnWidgetDataSourceChanged;
         }
 
         if (e.NewValue is CanvasPanelViewModel newVm)
@@ -577,8 +578,30 @@ public sealed class DashboardCanvas : System.Windows.Controls.Panel
             newVm.Widgets.CollectionChanged += canvas.OnWidgetsChanged;
             newVm.DataSourceRefreshed += canvas.OnDataSourceRefreshed;
             newVm.RenderAllWidgetsRequested += canvas.OnRenderAllWidgetsRequested;
+            newVm.WidgetDataSourceChanged += canvas.OnWidgetDataSourceChanged;
             canvas.ScheduleRebuildChildren();
         }
+    }
+
+    private async void OnWidgetDataSourceChanged(object? sender, DashboardWidget widget)
+    {
+        if (ViewModel?.ExplorerPanel is { } explorer)
+        {
+            var source = ViewModel.DataSources.FirstOrDefault(d => d.Id == widget.DataSourceId);
+            if (source is not null)
+            {
+                try
+                {
+                    await explorer.EnsureDataSourceLoadedAsync(source);
+                }
+                catch
+                {
+                    // RenderWidgetAsync will surface an error payload if data is still unavailable.
+                }
+            }
+        }
+
+        RefreshWidget(widget);
     }
 
     private void OnRenderAllWidgetsRequested(object? sender, EventArgs e)
@@ -702,7 +725,10 @@ public sealed class DashboardCanvas : System.Windows.Controls.Panel
 
         foreach (var widget in ViewModel.Widgets)
         {
-            var card = new WidgetCard(widget);
+            var card = new WidgetCard(
+                widget,
+                ViewModel.DataSources,
+                (w, id) => ViewModel.SetWidgetDataSource(w, id));
             card.ChartClicked += (_, args) => OnCardChartClicked(widget, args);
             _cardsByWidgetId[widget.Id] = card;
             Children.Add(card);

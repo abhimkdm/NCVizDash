@@ -1,5 +1,7 @@
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using Microsoft.Extensions.Logging;
@@ -35,10 +37,11 @@ public sealed class WidgetCard : FrameworkElement
     private static readonly Typeface TitleTypeface = new("Segoe UI");
 
     private const double CornerRadius = 6d;
-    private const double TitleBarHeight = 28d;
+    private const double TitleBarHeight = 32d;
     private const double ResizeHandleSize = 10d;
     private const double TitleFontSize = 11d;
     private const double Elevation = 3d;
+    private const double DataSourceComboWidth = 108d;
 
     // ── Fields ───────────────────────────────────────────────────────────────
 
@@ -46,7 +49,10 @@ public sealed class WidgetCard : FrameworkElement
     public DashboardWidget Widget { get; }
 
     private readonly ChartHost _chartHost;
+    private readonly ComboBox _dataSourceCombo;
+    private readonly Action<DashboardWidget, Guid> _onDataSourceChanged;
     private bool _isDark;
+    private bool _isSyncingCombo;
 
     /// <summary>
     /// Whether this card should render its dark-theme chrome. Not wired to
@@ -65,17 +71,58 @@ public sealed class WidgetCard : FrameworkElement
     }
 
     /// <summary>Initialises a card for the given widget, creating its child <see cref="ChartHost"/>.</summary>
-    public WidgetCard(DashboardWidget widget, ILogger<ChartHost>? chartHostLogger = null)
+    public WidgetCard(
+        DashboardWidget widget,
+        ObservableCollection<DataSourceDescriptor> dataSources,
+        Action<DashboardWidget, Guid> onDataSourceChanged,
+        ILogger<ChartHost>? chartHostLogger = null)
     {
         Widget = widget;
+        _onDataSourceChanged = onDataSourceChanged;
         Widget.PropertyChanged += OnWidgetPropertyChanged;
         Widget.Layout.PropertyChanged += OnLayoutPropertyChanged;
 
+        _dataSourceCombo = new ComboBox
+        {
+            DisplayMemberPath = nameof(DataSourceDescriptor.Name),
+            SelectedValuePath = nameof(DataSourceDescriptor.Id),
+            ItemsSource = dataSources,
+            FontSize = 9,
+            Padding = new Thickness(4, 2, 4, 2),
+            ToolTip = "Data source for this widget"
+        };
+        _dataSourceCombo.SelectionChanged += OnDataSourceComboSelectionChanged;
+        SyncDataSourceComboSelection();
+
         _chartHost = new ChartHost(chartHostLogger);
+        AddVisualChild(_dataSourceCombo);
         AddVisualChild(_chartHost);
+        AddLogicalChild(_dataSourceCombo);
         AddLogicalChild(_chartHost);
 
         PreviewMouseLeftButtonDown += OnPreviewMouseLeftButtonDown;
+    }
+
+    private void OnDataSourceComboSelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_isSyncingCombo) return;
+        if (_dataSourceCombo.SelectedValue is not Guid id || id == Widget.DataSourceId) return;
+        _onDataSourceChanged(Widget, id);
+    }
+
+    private void SyncDataSourceComboSelection()
+    {
+        _isSyncingCombo = true;
+        try
+        {
+            _dataSourceCombo.SelectedValue = Widget.DataSourceId;
+            if (_dataSourceCombo.SelectedItem is null && _dataSourceCombo.Items.Count > 0)
+                _dataSourceCombo.SelectedIndex = 0;
+        }
+        finally
+        {
+            _isSyncingCombo = false;
+        }
     }
 
     /// <summary>
@@ -85,6 +132,7 @@ public sealed class WidgetCard : FrameworkElement
     private void OnPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
         if (e.Handled) return;
+        if (IsDescendantOf(_dataSourceCombo, e.OriginalSource as DependencyObject)) return;
 
         var pos = e.GetPosition(this);
         var onTitleBar = pos.Y <= TitleBarHeight + 2;
@@ -96,6 +144,17 @@ public sealed class WidgetCard : FrameworkElement
         if (FindParent<DashboardCanvas>(this) is not DashboardCanvas canvas) return;
 
         canvas.BeginWidgetInteraction(Widget, e.GetPosition(canvas), resize: onResizeGrip, e);
+    }
+
+    private static bool IsDescendantOf(DependencyObject ancestor, DependencyObject? node)
+    {
+        for (var current = node; current is not null; current = VisualTreeHelper.GetParent(current))
+        {
+            if (current == ancestor)
+                return true;
+        }
+
+        return false;
     }
 
     private static T? FindParent<T>(DependencyObject? child) where T : DependencyObject
@@ -135,15 +194,24 @@ public sealed class WidgetCard : FrameworkElement
     public Task<byte[]?> CapturePngBytesAsync() => _chartHost.CapturePngBytesAsync();
 
     /// <summary>Releases the underlying WebView2 resources. Call when the card is removed from the canvas.</summary>
-    public void Cleanup() => _chartHost.Cleanup();
+    public void Cleanup()
+    {
+        _dataSourceCombo.SelectionChanged -= OnDataSourceComboSelectionChanged;
+        _chartHost.Cleanup();
+    }
 
-    // ── Visual tree plumbing (single child) ──────────────────────────────────
+    // ── Visual tree plumbing ─────────────────────────────────────────────────
 
     /// <inheritdoc/>
-    protected override int VisualChildrenCount => 1;
+    protected override int VisualChildrenCount => 2;
 
     /// <inheritdoc/>
-    protected override Visual GetVisualChild(int index) => _chartHost;
+    protected override Visual GetVisualChild(int index) => index switch
+    {
+        0 => _dataSourceCombo,
+        1 => _chartHost,
+        _ => throw new ArgumentOutOfRangeException(nameof(index))
+    };
 
     /// <inheritdoc/>
     protected override Size MeasureOverride(Size availableSize)
@@ -152,6 +220,7 @@ public sealed class WidgetCard : FrameworkElement
         var height = GridGeometryHelper.ToPixels(Widget.Layout.RowSpan);
         var childSize = new Size(width, height);
 
+        _dataSourceCombo.Measure(new Size(DataSourceComboWidth, TitleBarHeight));
         _chartHost.Measure(childSize);
         return childSize;
     }
@@ -159,6 +228,9 @@ public sealed class WidgetCard : FrameworkElement
     /// <inheritdoc/>
     protected override Size ArrangeOverride(Size finalSize)
     {
+        var comboLeft = Math.Max(4, finalSize.Width - DataSourceComboWidth - 18);
+        _dataSourceCombo.Arrange(new Rect(comboLeft, 5, DataSourceComboWidth, TitleBarHeight - 6));
+
         // Leave the bottom-right resize grip outside the WebView2 hit region.
         var bodyRect = new Rect(
             4, TitleBarHeight + 2,
@@ -175,6 +247,9 @@ public sealed class WidgetCard : FrameworkElement
     {
         if (e.PropertyName is nameof(DashboardWidget.IsSelected) or nameof(DashboardWidget.Title))
             InvalidateVisual();
+
+        if (e.PropertyName is nameof(DashboardWidget.DataSourceId))
+            SyncDataSourceComboSelection();
     }
 
     private void OnLayoutPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -212,9 +287,10 @@ public sealed class WidgetCard : FrameworkElement
         dc.DrawRectangle(titleBarBg, null,
             new Rect(cardRect.X, cardRect.Y + CornerRadius, cardRect.Width, TitleBarHeight - CornerRadius));
 
-        // Title text.
+        // Title text (leave room for the data-source combo on the right).
         var titleBrush = _isDark ? TitleTextBrushDark : TitleTextBrush;
-        RenderText(dc, Widget.Title, new Point(cardRect.X + 10, cardRect.Y + 7), titleBrush, cardRect.Width - 20);
+        var titleWidth = Math.Max(40, cardRect.Width - DataSourceComboWidth - 28);
+        RenderText(dc, Widget.Title, new Point(cardRect.X + 10, cardRect.Y + 8), titleBrush, titleWidth);
 
         // Resize handle (bottom-right).
         var handleX = cardRect.Right - ResizeHandleSize - 2;

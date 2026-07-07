@@ -74,6 +74,7 @@ public sealed partial class ShellViewModel : ObservableObject
         _canvasPanel = canvasPanel;
         _visualLibrary = visualLibrary;
         _explorerPanel.GenerateDashboardForSource = GenerateDashboardAsync;
+        _canvasPanel.ExplorerPanel = _explorerPanel;
         _canvasPanel.ResolveDataSourceId = id => id != Guid.Empty
             ? id
             : _explorerPanel.DataSources.FirstOrDefault()?.Id ?? Guid.Empty;

@@ -139,4 +139,52 @@ public static class GridGeometryHelper
 
         return aLeft < bRight && aRight > bLeft && aTop < bBottom && aBottom > bTop;
     }
+
+    /// <summary>
+    /// Finds the first grid slot that does not overlap any existing widget,
+    /// optionally preferring a drop location (snapped to the grid).
+    /// </summary>
+    public static (int Column, int Row) FindNextFreeSlot(
+        IEnumerable<DashboardWidget> existing,
+        int colSpan,
+        int rowSpan,
+        int gridColumns,
+        int? preferColumn = null,
+        int? preferRow = null)
+    {
+        colSpan = ClampColumnSpan(colSpan);
+        rowSpan = ClampRowSpan(rowSpan);
+        gridColumns = Math.Max(gridColumns, colSpan);
+
+        if (preferColumn is int pc && preferRow is int pr)
+        {
+            var col = ClampPosition(pc, colSpan, gridColumns);
+            var row = Math.Max(0, pr);
+            if (!OverlapsAny(existing, col, row, colSpan, rowSpan))
+                return (col, row);
+        }
+
+        var maxRow = existing.Any()
+            ? existing.Max(w => w.Layout.Row + w.Layout.RowSpan)
+            : 0;
+
+        for (var row = 0; row <= maxRow + rowSpan + 8; row++)
+        {
+            for (var col = 0; col <= gridColumns - colSpan; col++)
+            {
+                if (!OverlapsAny(existing, col, row, colSpan, rowSpan))
+                    return (col, row);
+            }
+        }
+
+        return (0, maxRow + 2);
+    }
+
+    private static bool OverlapsAny(
+        IEnumerable<DashboardWidget> existing,
+        int col, int row, int colSpan, int rowSpan)
+    {
+        var probe = new WidgetLayout { Column = col, Row = row, ColumnSpan = colSpan, RowSpan = rowSpan };
+        return existing.Any(w => Overlaps(w.Layout, probe));
+    }
 }

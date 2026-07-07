@@ -353,6 +353,27 @@ public sealed partial class CanvasPanelViewModel : ObservableObject
     /// <summary>Drives full-screen Story Mode presentations (v2.0 Feature 3).</summary>
     public NCVizDash.TaskPane.Presentation.PresentationController Presentation { get; }
 
+    /// <summary>Optional link to the explorer so widgets can list workbook data sources.</summary>
+    public ExplorerPanelViewModel? ExplorerPanel { get; set; }
+
+    /// <summary>Data sources available for per-widget binding (from the explorer).</summary>
+    public ObservableCollection<DataSourceDescriptor> DataSources =>
+        ExplorerPanel?.DataSources ?? EmptyDataSources;
+
+    private static readonly ObservableCollection<DataSourceDescriptor> EmptyDataSources = [];
+
+    /// <summary>Changes a widget's data source and requests a re-render.</summary>
+    public event EventHandler<DashboardWidget>? WidgetDataSourceChanged;
+
+    /// <summary>Updates which data source a widget queries.</summary>
+    public void SetWidgetDataSource(DashboardWidget widget, Guid dataSourceId)
+    {
+        if (widget.DataSourceId == dataSourceId) return;
+        widget.DataSourceId = dataSourceId;
+        WidgetDataSourceChanged?.Invoke(this, widget);
+        _logger.LogInformation("Widget '{Title}' data source changed to {Id}.", widget.Title, dataSourceId);
+    }
+
     /// <summary>
     /// Optional fallback when a field drop does not carry a data source id
     /// (e.g. resolves to the first loaded explorer source).
@@ -463,9 +484,14 @@ public sealed partial class CanvasPanelViewModel : ObservableObject
     public void AddWidget(DashboardWidget widget)
     {
         if (ActiveDashboard?.IsReadOnly == true) return;
+        if (Widgets.Any(w => w.Id == widget.Id)) return;
+
         if (ActiveDashboard is not null) UndoRedo.RecordSnapshot(ActiveDashboard);
         Widgets.Add(widget);
-        ActiveDashboard?.Widgets.Add(widget);
+
+        if (ActiveDashboard?.Widgets.Contains(widget) != true)
+            ActiveDashboard?.Widgets.Add(widget);
+
         SelectWidget(widget, additive: false);
         _logger.LogInformation("Widget '{Title}' added to canvas.", widget.Title);
     }
@@ -501,30 +527,57 @@ public sealed partial class CanvasPanelViewModel : ObservableObject
     public DashboardWidget AddWidgetFromFieldDrop(
         FieldDescriptor droppedField,
         Guid dataSourceId,
-        VisualType? overrideVisual = null)
+        VisualType? overrideVisual = null,
+        int? dropColumn = null,
+        int? dropRow = null)
     {
         var fields = new[] { droppedField };
         var (recommendedVisual, _, explanation) = _ruleEngine.RecommendWithExplanation(fields);
         var visual = overrideVisual ?? recommendedVisual;
 
+        var existing = FindSimilarWidget(visual, dataSourceId, droppedField);
+        if (existing is not null)
+        {
+            SelectWidget(existing, additive: false);
+            _logger.LogInformation(
+                "Field drop ignored — widget already exists for '{Field}' ({Visual}).",
+                droppedField.DisplayName, visual);
+            return existing;
+        }
+
         _logger.LogInformation(
             "Field drop: '{Field}' → {Visual} (rule: {Explanation}).",
             droppedField.DisplayName, visual, explanation);
 
-        return AddWidgetFromDrop(visual, droppedField, dataSourceId);
+        return AddWidgetFromDrop(visual, droppedField, dataSourceId, dropColumn, dropRow);
     }
 
     /// <summary>
     /// Creates a new widget of the given visual type, optionally seeded with a
     /// field from the explorer, and places it at a default grid position.
     /// </summary>
-    public DashboardWidget AddWidgetFromDrop(VisualType visualType, FieldDescriptor? seedField = null, Guid? dataSourceId = null)
+    public DashboardWidget AddWidgetFromDrop(
+        VisualType visualType,
+        FieldDescriptor? seedField = null,
+        Guid? dataSourceId = null,
+        int? dropColumn = null,
+        int? dropRow = null)
     {
         if (ActiveDashboard is null)
         {
             ActiveDashboard = new Dashboard { Name = "Untitled Dashboard" };
             GlobalFilterManager.SetDashboard(ActiveDashboard);
         }
+
+        var colSpan = DefaultColumnSpan(visualType);
+        var rowSpan = DefaultRowSpan(visualType);
+        var (col, row) = GridGeometryHelper.FindNextFreeSlot(
+            Widgets,
+            colSpan,
+            rowSpan,
+            ActiveDashboard.GridColumns,
+            dropColumn,
+            dropRow);
 
         var widget = new DashboardWidget
         {
@@ -535,10 +588,10 @@ public sealed partial class CanvasPanelViewModel : ObservableObject
             DataSourceId = dataSourceId ?? Guid.Empty,
             Layout = new WidgetLayout
             {
-                Column = NextDropColumn(),
-                Row = NextDropRow(),
-                ColumnSpan = DefaultColumnSpan(visualType),
-                RowSpan = DefaultRowSpan(visualType)
+                Column = col,
+                Row = row,
+                ColumnSpan = colSpan,
+                RowSpan = rowSpan
             }
         };
 
@@ -771,14 +824,24 @@ public sealed partial class CanvasPanelViewModel : ObservableObject
 
     // ── Drop placement helpers ───────────────────────────────────────────────
 
-    /// <summary>
-    /// Naive staggered placement so successive drops don't all land in the same
-    /// spot. A real layout-aware placement (skip occupied cells) is a natural next
-    /// refinement once Phase 11 templates start placing many widgets at once.
-    /// </summary>
-    private int NextDropColumn() => (Widgets.Count * 2) % Math.Max(ActiveDashboard?.GridColumns ?? 24, 1);
+    private DashboardWidget? FindSimilarWidget(VisualType visual, Guid dataSourceId, FieldDescriptor field) =>
+        Widgets.FirstOrDefault(w =>
+            w.VisualType == visual &&
+            w.DataSourceId == dataSourceId &&
+            SingleFieldMatches(w, field));
 
-    private int NextDropRow() => (Widgets.Count / 4) * 4;
+    private static bool SingleFieldMatches(DashboardWidget widget, FieldDescriptor field) =>
+        field.FieldType switch
+        {
+            FieldType.Measure => widget.MeasureFields.Count == 1
+                && widget.MeasureFields[0] == field.Name
+                && widget.DimensionFields.Count == 0,
+            FieldType.Dimension or FieldType.Time => widget.DimensionFields.Count == 1
+                && widget.DimensionFields[0] == field.Name
+                && widget.MeasureFields.Count == 0,
+            FieldType.Filter => widget.DimensionFields.SequenceEqual([field.Name]),
+            _ => false
+        };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

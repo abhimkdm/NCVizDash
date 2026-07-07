@@ -3,6 +3,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using NCVizDash.Models;
+using NCVizDash.TaskPane.Geometry;
 using NCVizDash.TaskPane.ViewModels;
 
 namespace NCVizDash.TaskPane.Views;
@@ -68,11 +69,14 @@ public sealed partial class CanvasPanelView : System.Windows.Controls.UserContro
 
         if (ViewModel is null) return;
 
+        var dropColumn = (int?)GridGeometryHelper.SnapToGrid(e.GetPosition(TheCanvas).X);
+        var dropRow = (int?)GridGeometryHelper.SnapToGrid(e.GetPosition(TheCanvas).Y);
+
         // Visual Library tile → empty widget of that type.
         if (e.Data.GetDataPresent(VisualLibraryView.VisualDragFormat))
         {
             if (e.Data.GetData(VisualLibraryView.VisualDragFormat) is VisualTypeEntry entry)
-                ViewModel.AddWidgetFromDrop(entry.VisualType);
+                ViewModel.AddWidgetFromDrop(entry.VisualType, dropColumn: dropColumn, dropRow: dropRow);
             return;
         }
 
@@ -85,7 +89,7 @@ public sealed partial class CanvasPanelView : System.Windows.Controls.UserContro
                     ? id
                     : Guid.Empty;
                 var resolvedId = ViewModel.ResolveDataSourceId?.Invoke(dataSourceId) ?? dataSourceId;
-                ViewModel.AddWidgetFromFieldDrop(field, resolvedId);
+                ViewModel.AddWidgetFromFieldDrop(field, resolvedId, dropColumn: dropColumn, dropRow: dropRow);
             }
         }
     }
