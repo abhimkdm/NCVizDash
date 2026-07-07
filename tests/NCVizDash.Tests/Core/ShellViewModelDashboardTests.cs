@@ -31,7 +31,7 @@ public sealed class ShellViewModelDashboardTests
             repo.Object,
             new NCVizDash.TaskPane.Templates.TemplateInstantiationService(NullLogger<NCVizDash.TaskPane.Templates.TemplateInstantiationService>.Instance),
             new NCVizDash.TaskPane.Generation.OneClickDashboardGenerator(NullLogger<NCVizDash.TaskPane.Generation.OneClickDashboardGenerator>.Instance),
-            explorer, canvas, visualLibrary);
+            explorer, canvas, visualLibrary, null);
 
         return (repo, sut);
     }

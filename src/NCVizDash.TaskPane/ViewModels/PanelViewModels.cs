@@ -197,8 +197,16 @@ public sealed partial class ExplorerPanelViewModel : ObservableObject
     /// <returns>The IDs of every data source that was actually refreshed, for the caller to selectively re-render affected widgets.</returns>
     public async Task<IReadOnlyList<Guid>> RefreshSheetAsync(string sheetName, CancellationToken ct = default)
     {
-        var affected = DataSources.Where(ds => ds.SheetName == sheetName).ToList();
-        if (affected.Count == 0) return [];
+       var affected = DataSources.Where(ds => ds.SheetName == sheetName).ToList();
+
+        // If nothing on this sheet is tracked yet, it may contain a table that
+        // didn't exist at the last full scan (a new sheet, or a table added to
+        // an existing one) — do a full rescan instead of silently doing nothing.
+        if (affected.Count == 0)
+        {
+            await LoadDataSourcesAsync(ct);
+            return DataSources.Where(ds => ds.SheetName == sheetName).Select(ds => ds.Id).ToList();
+        }
 
         var refreshedIds = new List<Guid>();
 

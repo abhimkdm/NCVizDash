@@ -14,15 +14,14 @@ namespace NCVizDash.Core.Abstractions;
 /// </summary>
 public interface IExcelDataReader
 {
-    /// <summary>Returns all discoverable data sources in the active workbook.</summary>
+    /// <summary>Discovers every Excel Table and Named Range in the active workbook.</summary>
     Task<IReadOnlyList<DataSourceDescriptor>> GetDataSourcesAsync(CancellationToken ct = default);
 
-    /// <summary>
-    /// Reads all rows from the specified data source as a list of
-    /// dictionaries (column → value).
-    /// </summary>
-    Task<IReadOnlyList<IReadOnlyDictionary<string, object?>>> ReadRowsAsync(
-        Guid dataSourceId, CancellationToken ct = default);
+    /// <summary>Reads all rows for a previously-discovered data source.</summary>
+    Task<IReadOnlyList<IReadOnlyDictionary<string, object?>>> ReadRowsAsync(Guid dataSourceId, CancellationToken ct = default);
+
+    /// <summary>The name of whichever worksheet is currently active in Excel, or null if there's no active workbook.</summary>
+    string? GetActiveSheetName();
 }
 
 /// <summary>

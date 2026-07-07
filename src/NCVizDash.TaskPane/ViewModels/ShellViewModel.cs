@@ -20,6 +20,7 @@ public sealed partial class ShellViewModel : ObservableObject
     private readonly IAppSettingsProvider _settings;
     private readonly ThemeService _themeService;
     private readonly IDashboardRepository _dashboardRepository;
+    private readonly IExcelDataReader _excelDataReader;
     private readonly NCVizDash.TaskPane.Templates.TemplateInstantiationService _templateService;
     private readonly NCVizDash.TaskPane.Generation.OneClickDashboardGenerator _dashboardGenerator;
 
@@ -62,7 +63,8 @@ public sealed partial class ShellViewModel : ObservableObject
         NCVizDash.TaskPane.Generation.OneClickDashboardGenerator dashboardGenerator,
         ExplorerPanelViewModel explorerPanel,
         CanvasPanelViewModel canvasPanel,
-        VisualLibraryViewModel visualLibrary)
+        VisualLibraryViewModel visualLibrary,
+        IExcelDataReader excelDataReader)
     {
         _logger = logger;
         _settings = settings;
@@ -83,6 +85,7 @@ public sealed partial class ShellViewModel : ObservableObject
         CanvasPanel.ActiveTheme = ActiveTheme;
         _themeService.ApplyTheme(ActiveTheme);
         _logger.LogInformation("ShellViewModel initialised.");
+        _excelDataReader = excelDataReader;
     }
 
     // ── Theme / data refresh ──────────────────────────────────────────────────
@@ -136,7 +139,7 @@ public sealed partial class ShellViewModel : ObservableObject
     /// <summary>Requests the dashboard be detached into a separate, non-modal, resizable window.</summary>
     [RelayCommand]
     public void RequestPopOut() => PopOutRequested?.Invoke(this, EventArgs.Empty);
-    
+
     // ── One-Click Dashboard Generator (v2.0 Feature 1) ───────────────────────
 
     /// <summary>
@@ -147,7 +150,7 @@ public sealed partial class ShellViewModel : ObservableObject
     [RelayCommand]
     public async Task GenerateDashboardAsync(DataSourceDescriptor? source = null)
     {
-        var target = source ?? ExplorerPanel.DataSources.FirstOrDefault();
+         var target = source ?? PreferActiveSheetDataSource();
         if (target is null)
         {
             StatusMessage = "No data source loaded — refresh data before generating a dashboard.";
@@ -179,6 +182,24 @@ public sealed partial class ShellViewModel : ObservableObject
         }
     }
 
+    /// <summary>
+    /// Picks the data source matching whichever sheet is currently active in
+    /// Excel, if one is loaded — falls back to the first loaded source if the
+    /// active sheet has no matching data source (or if the active sheet can't
+    /// be determined at all).
+    /// </summary>
+    private DataSourceDescriptor? PreferActiveSheetDataSource()
+    {
+        var activeSheetName = _excelDataReader.GetActiveSheetName();
+        if (activeSheetName is not null)
+        {
+            var match = ExplorerPanel.DataSources.FirstOrDefault(ds => ds.SheetName == activeSheetName);
+            if (match is not null) return match;
+        }
+
+        return ExplorerPanel.DataSources.FirstOrDefault();
+    }
+
     // ── Templates (Phase 11) ──────────────────────────────────────────────────
 
     /// <summary>
@@ -189,7 +210,7 @@ public sealed partial class ShellViewModel : ObservableObject
     [RelayCommand]
     public void ApplyTemplate((NCVizDash.TaskPane.Templates.DashboardTemplate Template, DataSourceDescriptor? Source) args)
     {
-        var source = args.Source ?? ExplorerPanel.DataSources.FirstOrDefault();
+        var source = args.Source ?? PreferActiveSheetDataSource();
         if (source is null)
         {
             StatusMessage = "No data source loaded — refresh data before applying a template.";

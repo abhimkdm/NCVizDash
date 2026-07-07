@@ -64,7 +64,8 @@ public sealed partial class ThisAddIn
             // ── 5. Wire Excel application events ──
             Application.WorkbookActivate         += OnWorkbookActivate;
             Application.WorkbookDeactivate       += OnWorkbookDeactivate;
-            Application.SheetChange              += OnSheetChange;
+            Application.SheetChange               += OnSheetChange;
+            Application.SheetActivate             += OnSheetActivate;
 
             _logger.LogInformation("NC VizDash startup complete.");
         }
@@ -87,9 +88,10 @@ public sealed partial class ThisAddIn
         {
             _logger?.LogInformation("NC VizDash shutting down.");
 
-            Application.WorkbookActivate         -= OnWorkbookActivate;
+           Application.WorkbookActivate         -= OnWorkbookActivate;
             Application.WorkbookDeactivate       -= OnWorkbookDeactivate;
-            Application.SheetChange              -= OnSheetChange;
+            Application.SheetChange               -= OnSheetChange;
+            Application.SheetActivate             -= OnSheetActivate;
 
             _autoRefreshDebounceTimer?.Stop();
             _autoRefreshDebounceTimer?.Dispose();
@@ -451,6 +453,21 @@ public sealed partial class ThisAddIn
             _ = OnLiveRefreshDebounceElapsedAsync(sheetName);
         };
         _autoRefreshDebounceTimer.Start();
+    }
+
+    /// <summary>
+    /// Fires whenever the user switches to a different sheet. Covers the case
+    /// Live Refresh's debounced edit-based path misses entirely: a brand-new
+    /// sheet/table that was just pasted in and switched to, with no cell edit
+    /// (and therefore no SheetChange event) having happened yet.
+    /// </summary>
+    private void OnSheetActivate(object sheet)
+    {
+        var sheetName = (sheet as Microsoft.Office.Interop.Excel.Worksheet)?.Name ?? "unknown";
+        _logger?.LogDebug("Sheet activated: '{Sheet}'.", sheetName);
+
+        if (_serviceProvider is null) return;
+        _ = OnLiveRefreshDebounceElapsedAsync(sheetName); // reuses the same rescan-if-unknown logic as edits
     }
 
     /// <summary>

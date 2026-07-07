@@ -375,4 +375,17 @@ public sealed class ExcelDataReader : IExcelDataReader
 
         return id;
     }
+
+    /// <inheritdoc/>
+    public string? GetActiveSheetName()
+    {
+        try
+        {
+            return (_excelApp.ActiveSheet as Worksheet)?.Name;
+        }
+        catch
+        {
+            return null; // no active workbook, or COM call failed transiently
+        }
+    }
 }
