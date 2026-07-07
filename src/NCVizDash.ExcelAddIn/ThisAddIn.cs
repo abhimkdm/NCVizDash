@@ -125,13 +125,23 @@ public sealed partial class ThisAddIn
         ribbon.NewDashboardRequested    -= OnNewDashboardRequested;
         ribbon.OpenDashboardRequested   -= OnOpenDashboardRequested;
         ribbon.SaveDashboardRequested   -= OnSaveDashboardRequested;
+        ribbon.TemplatesRequested       -= OnTemplatesRequested;
+        ribbon.GenerateDashboardRequested -= OnGenerateDashboardRequested;
+        ribbon.PresentRequested         -= OnPresentRequested;
+        ribbon.PopOutRequested          -= OnPopOutRequested;
+        ribbon.AiSettingsRequested      -= OnAiSettingsRequested;
 
         ribbon.DataRefreshRequested     += OnDataRefreshRequested;
         ribbon.TaskPaneToggleRequested  += OnTaskPaneToggleRequested;
         ribbon.ThemeChangeRequested     += OnThemeChangeRequested;
-        ribbon.NewDashboardRequested    += OnNewDashboardRequested;
-        ribbon.OpenDashboardRequested   += OnOpenDashboardRequested;
-        ribbon.SaveDashboardRequested   += OnSaveDashboardRequested;
+        ribbon.NewDashboardRequested   += OnNewDashboardRequested;
+        ribbon.OpenDashboardRequested  += OnOpenDashboardRequested;
+        ribbon.SaveDashboardRequested  += OnSaveDashboardRequested;
+        ribbon.TemplatesRequested      += OnTemplatesRequested;
+        ribbon.GenerateDashboardRequested += OnGenerateDashboardRequested;
+        ribbon.PresentRequested        += OnPresentRequested;
+        ribbon.AiSettingsRequested     += OnAiSettingsRequested;
+        ribbon.PopOutRequested         += OnPopOutRequested;
     }
 
     // ── DI composition root ──────────────────────────────────────────────────
@@ -282,6 +292,12 @@ public sealed partial class ThisAddIn
     private void OnTaskPaneToggleRequested(object? sender, bool visible)
     {
         SetTaskPaneVisible(visible);
+
+        if (!visible || _serviceProvider is null) return;
+
+        var shell = _serviceProvider.GetRequiredService<ShellViewModel>();
+        if (shell.ExplorerPanel.DataSources.Count == 0)
+            _ = shell.RefreshDataAsync();
     }
 
     private void SetTaskPaneVisible(bool visible)
@@ -332,6 +348,62 @@ public sealed partial class ThisAddIn
         if (_serviceProvider is null) return;
         var shell = _serviceProvider.GetRequiredService<ShellViewModel>();
         _ = shell.SaveDashboardCommand.ExecuteAsync(null);
+    }
+
+    private void OnTemplatesRequested(object? sender, EventArgs e)
+    {
+        if (_serviceProvider is null) return;
+        var shell = _serviceProvider.GetRequiredService<ShellViewModel>();
+        new NCVizDash.TaskPane.Views.TemplatePickerWindow(shell).ShowDialog();
+    }
+
+    private async void OnGenerateDashboardRequested(object? sender, EventArgs e)
+    {
+        if (_serviceProvider is null) return;
+
+        SetTaskPaneVisible(true);
+        var shell = _serviceProvider.GetRequiredService<ShellViewModel>();
+
+        try
+        {
+            if (shell.ExplorerPanel.DataSources.Count == 0)
+                await shell.RefreshDataAsync();
+
+            if (shell.ExplorerPanel.DataSources.Count == 0)
+            {
+                shell.StatusMessage = "No data sources found — add an Excel table or named range, then click Refresh.";
+                return;
+            }
+
+            await shell.GenerateDashboardCommand.ExecuteAsync(null);
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex, "Generate Dashboard failed.");
+            shell.StatusMessage = $"Generate failed: {ex.Message}";
+        }
+    }
+
+    private void OnPresentRequested(object? sender, EventArgs e)
+    {
+        if (_serviceProvider is null) return;
+        var shell = _serviceProvider.GetRequiredService<ShellViewModel>();
+        shell.RequestPresentCommand.Execute(null);
+    }
+
+     private void OnPopOutRequested(object? sender, EventArgs e)
+    {
+        if (_serviceProvider is null) return;
+        SetTaskPaneVisible(true);
+        var shell = _serviceProvider.GetRequiredService<ShellViewModel>();
+        shell.RequestPopOutCommand.Execute(null);
+    }
+
+    private void OnAiSettingsRequested(object? sender, EventArgs e)
+    {
+        if (_serviceProvider is null) return;
+        var settings = _serviceProvider.GetRequiredService<IAppSettingsProvider>();
+        new NCVizDash.TaskPane.Views.AiSettingsWindow(settings).ShowDialog();
     }
 
     private void OnThemeChangeRequested(object? sender, string theme)

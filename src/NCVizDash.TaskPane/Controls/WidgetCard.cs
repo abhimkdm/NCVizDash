@@ -43,6 +43,9 @@ public sealed class WidgetCard : FrameworkElement
     private const double Elevation = 3d;
     private const double DataSourceComboWidth = 108d;
 
+    /// <summary>Per-widget data source picker — hidden until the UX is finalized.</summary>
+    private static readonly bool ShowDataSourcePicker = false;
+
     // ── Fields ───────────────────────────────────────────────────────────────
 
     /// <summary>The widget data model this card represents.</summary>
@@ -93,12 +96,17 @@ public sealed class WidgetCard : FrameworkElement
         };
         _dataSourceCombo.SelectionChanged += OnDataSourceComboSelectionChanged;
         SyncDataSourceComboSelection();
+        if (!ShowDataSourcePicker)
+            _dataSourceCombo.Visibility = Visibility.Collapsed;
 
         _chartHost = new ChartHost(chartHostLogger);
-        AddVisualChild(_dataSourceCombo);
+        if (ShowDataSourcePicker)
+        {
+            AddVisualChild(_dataSourceCombo);
+            AddLogicalChild(_dataSourceCombo);
+        }
+
         AddVisualChild(_chartHost);
-        AddLogicalChild(_dataSourceCombo);
-        AddLogicalChild(_chartHost);
 
         PreviewMouseLeftButtonDown += OnPreviewMouseLeftButtonDown;
     }
@@ -203,15 +211,21 @@ public sealed class WidgetCard : FrameworkElement
     // ── Visual tree plumbing ─────────────────────────────────────────────────
 
     /// <inheritdoc/>
-    protected override int VisualChildrenCount => 2;
+    protected override int VisualChildrenCount => ShowDataSourcePicker ? 2 : 1;
 
     /// <inheritdoc/>
-    protected override Visual GetVisualChild(int index) => index switch
+    protected override Visual GetVisualChild(int index)
     {
-        0 => _dataSourceCombo,
-        1 => _chartHost,
-        _ => throw new ArgumentOutOfRangeException(nameof(index))
-    };
+        if (!ShowDataSourcePicker)
+            return _chartHost;
+
+        return index switch
+        {
+            0 => _dataSourceCombo,
+            1 => _chartHost,
+            _ => throw new ArgumentOutOfRangeException(nameof(index))
+        };
+    }
 
     /// <inheritdoc/>
     protected override Size MeasureOverride(Size availableSize)
@@ -220,7 +234,8 @@ public sealed class WidgetCard : FrameworkElement
         var height = GridGeometryHelper.ToPixels(Widget.Layout.RowSpan);
         var childSize = new Size(width, height);
 
-        _dataSourceCombo.Measure(new Size(DataSourceComboWidth, TitleBarHeight));
+        if (ShowDataSourcePicker)
+            _dataSourceCombo.Measure(new Size(DataSourceComboWidth, TitleBarHeight));
         _chartHost.Measure(childSize);
         return childSize;
     }
@@ -228,8 +243,11 @@ public sealed class WidgetCard : FrameworkElement
     /// <inheritdoc/>
     protected override Size ArrangeOverride(Size finalSize)
     {
-        var comboLeft = Math.Max(4, finalSize.Width - DataSourceComboWidth - 18);
-        _dataSourceCombo.Arrange(new Rect(comboLeft, 5, DataSourceComboWidth, TitleBarHeight - 6));
+        if (ShowDataSourcePicker)
+        {
+            var comboLeft = Math.Max(4, finalSize.Width - DataSourceComboWidth - 18);
+            _dataSourceCombo.Arrange(new Rect(comboLeft, 5, DataSourceComboWidth, TitleBarHeight - 6));
+        }
 
         // Leave the bottom-right resize grip outside the WebView2 hit region.
         var bodyRect = new Rect(
@@ -287,9 +305,11 @@ public sealed class WidgetCard : FrameworkElement
         dc.DrawRectangle(titleBarBg, null,
             new Rect(cardRect.X, cardRect.Y + CornerRadius, cardRect.Width, TitleBarHeight - CornerRadius));
 
-        // Title text (leave room for the data-source combo on the right).
+        // Title text.
         var titleBrush = _isDark ? TitleTextBrushDark : TitleTextBrush;
-        var titleWidth = Math.Max(40, cardRect.Width - DataSourceComboWidth - 28);
+        var titleWidth = ShowDataSourcePicker
+            ? Math.Max(40, cardRect.Width - DataSourceComboWidth - 28)
+            : cardRect.Width - 20;
         RenderText(dc, Widget.Title, new Point(cardRect.X + 10, cardRect.Y + 8), titleBrush, titleWidth);
 
         // Resize handle (bottom-right).

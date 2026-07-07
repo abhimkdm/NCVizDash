@@ -1,0 +1,75 @@
+<Window x:Class="NCVizDash.TaskPane.Views.PopOutDashboardWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:behaviors="clr-namespace:NCVizDash.TaskPane.Behaviors"
+        xmlns:md="http://materialdesigninxaml.net/winfx/xaml/themes"
+        Title="NC VizDash — Dashboard"
+        Width="1280"
+        Height="800"
+        MinWidth="640"
+        MinHeight="480"
+        WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource MaterialDesignBackground}"
+        TextElement.Foreground="{DynamicResource MaterialDesignBody}"
+        FontFamily="{md:MaterialDesignFont}"
+        KeyDown="Window_KeyDown">
+
+    <!-- Popped-out dashboard: same live DashboardCanvas as the task pane (re-parented),
+         non-modal and fully editable — unlike PresentationWindow, which is view-only. -->
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="40" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Border Grid.Row="0"
+                Background="{DynamicResource MaterialDesignToolBarBackground}"
+                BorderBrush="{DynamicResource MaterialDesignDivider}"
+                BorderThickness="0,0,0,1"
+                Padding="12,0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0"
+                            Orientation="Horizontal"
+                            VerticalAlignment="Center"
+                            behaviors:SpacingBehavior.Spacing="8">
+                    <md:PackIcon Kind="OpenInNew"
+                                 Width="18"
+                                 Height="18"
+                                 VerticalAlignment="Center"
+                                 Foreground="{DynamicResource PrimaryHueMidBrush}" />
+                    <TextBlock x:Name="TitleText"
+                               Text="Dashboard"
+                               FontWeight="SemiBold"
+                               FontSize="13"
+                               VerticalAlignment="Center" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="1"
+                            Orientation="Horizontal"
+                            VerticalAlignment="Center"
+                            behaviors:SpacingBehavior.Spacing="4">
+                    <Button Content="Dock back"
+                            Style="{StaticResource MaterialDesignFlatButton}"
+                            Padding="12,4"
+                            ToolTip="Return the dashboard to the task pane"
+                            Click="CloseButton_Click" />
+                    <Button Style="{StaticResource MaterialDesignIconButton}"
+                            ToolTip="Close and dock back to task pane"
+                            Click="CloseButton_Click">
+                        <md:PackIcon Kind="Close" Width="18" Height="18" />
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Border x:Name="CanvasHostBorder"
+                Grid.Row="1"
+                Background="{DynamicResource MaterialDesignPaper}"
+                ClipToBounds="True" />
+    </Grid>
+</Window>

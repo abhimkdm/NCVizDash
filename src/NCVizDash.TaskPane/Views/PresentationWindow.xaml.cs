@@ -35,6 +35,8 @@ public sealed partial class PresentationWindow : Window
         CanvasHostBorder.Child = _canvasHost;
         _canvasHost.IsHitTestVisible = false; // Story Mode is view-only — no accidental edits
 
+        Closing += (_, _) => CanvasHostBorder.Child = null;
+
         _controller.PageChanged += OnPageChanged;
         Loaded += (_, _) => _controller.Start(_dashboardId);
         Closed += (_, _) =>

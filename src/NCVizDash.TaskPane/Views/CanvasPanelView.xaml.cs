@@ -119,19 +119,36 @@ public sealed partial class CanvasPanelView : System.Windows.Controls.UserContro
 
     /// <summary>
     /// Launches full-screen Story Mode by re-parenting the live
-    /// <see cref="Controls.DashboardCanvas"/> into a <see cref="PresentationWindow"/> —
-    /// no second canvas is created, so the presentation always reflects real,
-    /// current widget data. Restored back to this view when the window closes.
+    /// <see cref="Controls.DashboardCanvas"/> into a <see cref="PresentationWindow"/>.
     /// </summary>
+    public void RequestPresent() => PresentButton_Click(this, new RoutedEventArgs());
+
     private void PresentButton_Click(object sender, RoutedEventArgs e)
     {
         if (ViewModel is not { ActiveDashboard: { } dashboard } vm) return;
+        if (TheCanvas.Parent is not Grid hostGrid) return;
 
-        var hostGrid = (Grid)TheCanvas.Parent;
         hostGrid.Children.Remove(TheCanvas);
 
         var window = new PresentationWindow(vm.Presentation, vm.GlobalFilterManager, TheCanvas, dashboard.Id);
-        window.Closed += (_, _) => hostGrid.Children.Add(TheCanvas);
+        window.Closed += (_, _) => CanvasReparentHelper.RestoreToGrid(TheCanvas, hostGrid);
         window.ShowDialog();
+
+    }
+
+    /// <summary>
+    /// Pops the dashboard into a separate, non-modal, editable window.
+    /// </summary>
+    public void RequestPopOut() => PopOutButton_Click(this, new RoutedEventArgs());
+
+    private void PopOutButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (ViewModel is null) return;
+        if (TheCanvas.Parent is not Grid hostGrid) return;
+        hostGrid.Children.Remove(TheCanvas);
+
+        var window = new PopOutDashboardWindow(TheCanvas);
+        window.Closed += (_, _) => CanvasReparentHelper.RestoreToGrid(TheCanvas, hostGrid);
+        window.Show(); // non-modal — Excel and the popped-out window are both usable
     }
 }

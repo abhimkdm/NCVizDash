@@ -143,7 +143,8 @@ public sealed partial class ExplorerPanelView : System.Windows.Controls.UserCont
 
     /// <summary>
     /// Prevents the Expander from toggling when the user clicks the Generate button
-    /// in the header (WPF routes header clicks to the expand/collapse handler).
+    /// in the header. We must not set <see cref="RoutedEventArgs.Handled"/> without
+    /// executing the button — preview handling otherwise swallows the click.
     /// </summary>
     private void Expander_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
@@ -152,9 +153,11 @@ public sealed partial class ExplorerPanelView : System.Windows.Controls.UserCont
 
         for (var element = origin; element is not null; element = VisualTreeHelper.GetParent(element))
         {
-            if (element is Button)
+            if (element is Button button)
             {
                 e.Handled = true;
+                if (button.Command?.CanExecute(button.CommandParameter) == true)
+                    button.Command.Execute(button.CommandParameter);
                 return;
             }
         }

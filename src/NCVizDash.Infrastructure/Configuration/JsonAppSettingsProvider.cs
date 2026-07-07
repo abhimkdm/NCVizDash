@@ -32,7 +32,8 @@ public sealed class JsonAppSettingsProvider : IAppSettingsProvider
         Reload();
     }
 
-    /// <inheritdoc/>
+    
+   /// <inheritdoc/>
     public void Reload()
     {
         try
@@ -49,6 +50,14 @@ public sealed class JsonAppSettingsProvider : IAppSettingsProvider
         {
             // Keep the existing / default settings if the file is malformed.
         }
+    }
+
+    /// <inheritdoc/>
+    public void Save()
+    {
+        var json = System.Text.Json.JsonSerializer.Serialize(_settings,
+            new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+        File.WriteAllText(_settingsPath, json);
     }
 
     // ── private ───────────────────────────────────────────────────────────

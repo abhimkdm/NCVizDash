@@ -51,6 +51,14 @@
 
                 <StackPanel Grid.Column="2" Orientation="Horizontal"
                             VerticalAlignment="Center" behaviors:SpacingBehavior.Spacing="8">
+                    <Button Style="{StaticResource MaterialDesignIconButton}"
+                            ToolTip="Pop out dashboard into its own window"
+                            Command="{Binding RequestPopOutCommand}"
+                            Foreground="White"
+                            Padding="4">
+                        <md:PackIcon Kind="OpenInNew" Width="20" Height="20" />
+                    </Button>
+
                     <TextBlock Text="Dark"
                                Foreground="White"
                                VerticalAlignment="Center"
@@ -78,7 +86,7 @@
                 <ContentControl Content="{Binding ExplorerPanel}">
                     <ContentControl.ContentTemplate>
                         <DataTemplate>
-                            <views:ExplorerPanelView />
+                            <views:ExplorerPanelView DataContext="{Binding}" />
                         </DataTemplate>
                     </ContentControl.ContentTemplate>
                 </ContentControl>
@@ -93,7 +101,7 @@
                 <ContentControl Content="{Binding CanvasPanel}">
                     <ContentControl.ContentTemplate>
                         <DataTemplate>
-                            <views:CanvasPanelView />
+                            <views:CanvasPanelView DataContext="{Binding}" />
                         </DataTemplate>
                     </ContentControl.ContentTemplate>
                 </ContentControl>

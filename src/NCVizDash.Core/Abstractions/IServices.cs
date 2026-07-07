@@ -214,4 +214,7 @@ public interface IAppSettingsProvider
 
     /// <summary>Re-reads settings from disk, refreshing <see cref="Settings"/>.</summary>
     void Reload();
+
+    /// <summary>Persists the current in-memory <see cref="Settings"/> back to disk.</summary>
+    void Save();
 }

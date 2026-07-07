@@ -38,6 +38,21 @@ public sealed class NCVizDashRibbon : IRibbonExtensibility
     /// <summary>Raised when the user requests the active dashboard be saved.</summary>
     public event EventHandler? SaveDashboardRequested;
 
+    /// <summary>Raised when the user requests the template picker.</summary>
+    public event EventHandler? TemplatesRequested;
+
+    /// <summary>Raised when the user requests one-click dashboard generation.</summary>
+    public event EventHandler? GenerateDashboardRequested;
+
+    /// <summary>Raised when the user requests full-screen presentation mode.</summary>
+    public event EventHandler? PresentRequested;
+
+    /// <summary>Raised when the user requests the dashboard be popped out into its own window.</summary>
+    public event EventHandler? PopOutRequested;
+
+    /// <summary>Raised when the user requests the AI settings dialog.</summary>
+    public event EventHandler? AiSettingsRequested;
+
     /// <summary>Raised when the user changes the active theme.</summary>
     public event EventHandler<string>? ThemeChangeRequested;
 
@@ -119,10 +134,39 @@ public sealed class NCVizDashRibbon : IRibbonExtensibility
         SaveDashboardRequested?.Invoke(this, EventArgs.Empty);
     }
 
+   /// <summary>Generate Dashboard button (One-Click Dashboard Generator).</summary>
+    public void BtnGenerateDashboard_Click(IRibbonControl control)
+    {
+        _logger.LogInformation("User requested: Generate Dashboard.");
+        GenerateDashboardRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>Present button (full-screen Story Mode).</summary>
+    public void BtnPresent_Click(IRibbonControl control)
+    {
+        _logger.LogInformation("User requested: Present.");
+        PresentRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>Pop Out button (dashboard in its own non-modal window).</summary>
+    public void BtnPopOut_Click(IRibbonControl control)
+    {
+        _logger.LogInformation("User requested: Pop Out.");
+        PopOutRequested?.Invoke(this, EventArgs.Empty);
+    }
+
     /// <summary>Templates button.</summary>
     public void BtnTemplates_Click(IRibbonControl control)
     {
         _logger.LogInformation("User requested: Templates.");
+        TemplatesRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>AI Settings button.</summary>
+    public void BtnAiSettings_Click(IRibbonControl control)
+    {
+        _logger.LogInformation("User requested: AI Settings.");
+        AiSettingsRequested?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>Refresh Data button.</summary>

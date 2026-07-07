@@ -1,0 +1,66 @@
+<Window x:Class="NCVizDash.TaskPane.Views.TemplatePickerWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:md="http://materialdesigninxaml.net/winfx/xaml/themes"
+        mc:Ignorable="d"
+        Title="Choose a Dashboard Template"
+        Width="640" Height="520"
+        WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource MaterialDesignBackground}">
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Text="Dashboard Templates" FontSize="20" FontWeight="Bold" Margin="0,0,0,4" />
+        <TextBlock Grid.Row="0" Text="Pick a template — fields are mapped automatically from your selected data source."
+                   FontSize="12" Foreground="{DynamicResource MaterialDesignBodyLight}"
+                   VerticalAlignment="Bottom" HorizontalAlignment="Right" />
+
+        <!-- Data source picker -->
+        <ComboBox Grid.Row="1" Margin="0,16,0,12"
+                  ItemsSource="{Binding DataSources}"
+                  SelectedItem="{Binding SelectedDataSource}"
+                  DisplayMemberPath="Name"
+                  md:HintAssist.Hint="Apply against data source"
+                  Width="320" HorizontalAlignment="Left" />
+
+        <!-- Template gallery -->
+        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+            <ItemsControl ItemsSource="{Binding Templates}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <UniformGrid Columns="2" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <md:Card Margin="6" Padding="14" Cursor="Hand"
+                                 MouseLeftButtonUp="TemplateCard_Click"
+                                 Tag="{Binding}">
+                            <StackPanel>
+                                <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="14" />
+                                <TextBlock Text="{Binding Category}" FontSize="11"
+                                           Foreground="{DynamicResource PrimaryHueMidBrush}" Margin="0,2,0,6" />
+                                <TextBlock Text="{Binding Description}" FontSize="12" TextWrapping="Wrap"
+                                           Foreground="{DynamicResource MaterialDesignBodyLight}" />
+                            </StackPanel>
+                        </md:Card>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+
+        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+            <TextBlock x:Name="StatusText" VerticalAlignment="Center" Margin="0,0,16,0"
+                       Foreground="{DynamicResource MaterialDesignBodyLight}" />
+            <Button Content="Cancel" Click="CancelButton_Click" Style="{StaticResource MaterialDesignFlatButton}" />
+        </StackPanel>
+    </Grid>
+</Window>

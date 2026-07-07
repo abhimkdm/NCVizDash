@@ -123,6 +123,20 @@ public sealed partial class ShellViewModel : ObservableObject
         }
     }
 
+   /// <summary>Raised when the user asks (via the ribbon) to enter full-screen Presentation Mode.</summary>
+    public event EventHandler? PresentRequested;
+
+    /// <summary>Requests full-screen Presentation Mode for whatever dashboard is currently open.</summary>
+    [RelayCommand]
+    public void RequestPresent() => PresentRequested?.Invoke(this, EventArgs.Empty);
+
+    /// <summary>Raised when the user asks (via the ribbon) to pop the dashboard out into its own window.</summary>
+    public event EventHandler? PopOutRequested;
+
+    /// <summary>Requests the dashboard be detached into a separate, non-modal, resizable window.</summary>
+    [RelayCommand]
+    public void RequestPopOut() => PopOutRequested?.Invoke(this, EventArgs.Empty);
+    
     // ── One-Click Dashboard Generator (v2.0 Feature 1) ───────────────────────
 
     /// <summary>
@@ -150,6 +164,7 @@ public sealed partial class ShellViewModel : ObservableObject
 
             var dashboard = _dashboardGenerator.Generate(target);
             CanvasPanel.OpenDashboard(dashboard);
+            CanvasPanel.GlobalFilterBar.RefreshAvailableFields(ExplorerPanel.DataSources);
             StatusMessage = $"Generated dashboard with {dashboard.Widgets.Count} widget(s) from '{target.Name}'.";
             _logger.LogInformation("One-click dashboard generated from '{Source}'.", target.Name);
         }

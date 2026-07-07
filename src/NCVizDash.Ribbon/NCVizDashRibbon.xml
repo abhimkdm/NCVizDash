@@ -1,9 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!--
-  NCVizDash Ribbon XML
-  Defines the "NC VizDash" tab that appears in the Excel ribbon.
-  Callbacks are handled by NCVizDashRibbon (IRibbonExtensibility).
--->
 <customUI xmlns="http://schemas.microsoft.com/office/2009/07/customui"
           onLoad="Ribbon_OnLoad">
 
@@ -11,15 +6,14 @@
     <tabs>
       <tab id="tabNCVizDash" label="NC VizDash" insertAfterMso="TabView">
 
-        <!-- ── Dashboard group ── -->
         <group id="grpDashboard" label="Dashboard">
-          <button id="btnNewDashboard"
+          <button id="btnGenerateDashboard"
                   label="Generate Dashboard"
-                  screentip="Generate a dashboard from your data"
-                  supertip="Builds KPIs, charts, and tables automatically from the active Excel table. Opens the task pane with the result."
+                  screentip="One-click dashboard generation"
+                  supertip="Scans your data and builds a complete dashboard automatically — KPIs, trends, category analysis, Top 10 — no configuration needed."
                   imageMso="ChartInsert"
                   size="large"
-                  onAction="BtnNewDashboard_Click" />
+                  onAction="BtnGenerateDashboard_Click" />
 
           <button id="btnOpenDashboard"
                   label="Open"
@@ -37,18 +31,15 @@
                   size="normal"
                   onAction="BtnSaveDashboard_Click" />
 
-          <separator id="sepDashboard" />
-
           <button id="btnTemplates"
                   label="Templates"
                   screentip="Browse dashboard templates"
-                  supertip="Pick a pre-built template to get started in seconds."
+                  supertip="Pick a pre-built template (Sales, Finance, HR, PMO, and more) — fields are mapped from your data automatically."
                   imageMso="TemplatePublish"
                   size="normal"
                   onAction="BtnTemplates_Click" />
         </group>
 
-        <!-- ── Data group ── -->
         <group id="grpData" label="Data">
           <button id="btnRefreshData"
                   label="Refresh"
@@ -61,13 +52,12 @@
           <button id="btnDataSources"
                   label="Data Sources"
                   screentip="Manage external data sources"
-                  supertip="Connect to SQL Server, CSV, REST APIs, and more."
+                  supertip="Connect to SQL Server, CSV, REST APIs, Jira, and more."
                   imageMso="DataConnectionProperties"
                   size="normal"
                   onAction="BtnDataSources_Click" />
         </group>
 
-        <!-- ── View group ── -->
         <group id="grpView" label="View">
           <toggleButton id="btnToggleTaskPane"
                         label="Task Pane"
@@ -77,6 +67,22 @@
                         size="large"
                         onAction="BtnToggleTaskPane_Click"
                         getPressed="BtnToggleTaskPane_GetPressed" />
+
+         <button id="btnPresent"
+                  label="Present"
+                  screentip="Full-screen presentation mode"
+                  supertip="Present the current dashboard full-screen, stepping through saved bookmarks."
+                  imageMso="SlideShowFromBeginning"
+                  size="normal"
+                  onAction="BtnPresent_Click" />
+
+          <button id="btnPopOut"
+                  label="Pop Out"
+                  screentip="Open the dashboard in its own window"
+                  supertip="Detaches the dashboard into a separate, resizable window — drag it to a second monitor while Excel keeps running behind it. Editing stays enabled, unlike Present."
+                  imageMso="NewWindow"
+                  size="normal"
+                  onAction="BtnPopOut_Click" />
 
           <comboBox id="cmbTheme"
                     label="Theme"
@@ -89,7 +95,6 @@
           </comboBox>
         </group>
 
-        <!-- ── Export group ── -->
         <group id="grpExport" label="Export">
           <splitButton id="splitExport" size="large">
             <button id="btnExportPDF"
@@ -113,8 +118,15 @@
           </splitButton>
         </group>
 
-        <!-- ── Help group ── -->
-        <group id="grpHelp" label="Help">
+        <group id="grpHelp" label="Help &amp; Settings">
+          <button id="btnAiSettings"
+                  label="AI Settings"
+                  screentip="Configure optional AI features"
+                  supertip="AI is fully optional and off by default. Enable it here and choose a provider if you want chart explanations and insight summaries."
+                  imageMso="ControlProperties"
+                  size="normal"
+                  onAction="BtnAiSettings_Click" />
+
           <button id="btnAbout"
                   label="About"
                   screentip="About NC VizDash"
