@@ -5,6 +5,7 @@ using NCVizDash.Core.Abstractions;
 using NCVizDash.Models;
 using NCVizDash.TaskPane.Geometry;
 using System.Collections.ObjectModel;
+using System.Windows;
 
 namespace NCVizDash.TaskPane.ViewModels;
 
@@ -47,6 +48,13 @@ public sealed partial class ExplorerPanelViewModel : ObservableObject
 
     [ObservableProperty]
     private bool _isGeneratingDashboard;
+
+    [ObservableProperty]
+    private bool _isCollapsed;
+
+    /// <summary>Toggles whether this panel is collapsed to a slim strip.</summary>
+    [RelayCommand]
+    private void ToggleCollapse() => IsCollapsed = !IsCollapsed;
 
     [ObservableProperty]
     private string _generatingStatusMessage = string.Empty;
@@ -425,6 +433,24 @@ public sealed partial class CanvasPanelViewModel : ObservableObject
 
     [ObservableProperty]
     private bool _snapToGrid = true;
+
+    /// <summary>True while the live canvas is hosted in a pop-out window.</summary>
+    [ObservableProperty]
+    private bool _isCanvasPoppedOut;
+
+    partial void OnIsCanvasPoppedOutChanged(bool value)
+    {
+        OnPropertyChanged(nameof(CanvasScrollVisibility));
+        OnPropertyChanged(nameof(PoppedOutHintVisibility));
+    }
+
+    /// <summary>Whether the in-pane canvas scroll host should be shown.</summary>
+    public Visibility CanvasScrollVisibility =>
+        IsCanvasPoppedOut ? Visibility.Collapsed : Visibility.Visible;
+
+    /// <summary>Whether the "dashboard is popped out" placeholder should be shown.</summary>
+    public Visibility PoppedOutHintVisibility =>
+        IsCanvasPoppedOut ? Visibility.Visible : Visibility.Collapsed;
 
     /// <summary>All widgets currently selected on the canvas (supports Ctrl+click multi-select).</summary>
     public ObservableCollection<DashboardWidget> SelectedWidgets { get; } = [];

@@ -146,6 +146,18 @@ public sealed partial class CanvasPanelView : System.Windows.Controls.UserContro
     /// </summary>
     public void RequestPopOut() => PopOutButton_Click(this, new RoutedEventArgs());
 
+    private void PopOutToolbar_Click(object sender, RoutedEventArgs e)
+    {
+        for (var parent = VisualTreeHelper.GetParent(this); parent is not null; parent = VisualTreeHelper.GetParent(parent))
+        {
+            if (parent is FrameworkElement { DataContext: ShellViewModel shell })
+            {
+                shell.RequestPopOutCommand.Execute(null);
+                return;
+            }
+        }
+    }
+
     private void PopOutButton_Click(object sender, RoutedEventArgs e)
     {
         if (ViewModel is null) return;
@@ -154,9 +166,11 @@ public sealed partial class CanvasPanelView : System.Windows.Controls.UserContro
         CanvasReparentHelper.ApplyCanvasBindings(TheCanvas, ViewModel);
         hostGrid.Children.Remove(TheCanvas);
 
+        ViewModel.IsCanvasPoppedOut = true;
         var window = new PopOutDashboardWindow(TheCanvas, ViewModel);
         window.Closed += (_, _) =>
         {
+            ViewModel.IsCanvasPoppedOut = false;
             CanvasReparentHelper.RestoreToGrid(TheCanvas, hostGrid);
             CanvasReparentHelper.ApplyCanvasBindings(TheCanvas, ViewModel);
         };

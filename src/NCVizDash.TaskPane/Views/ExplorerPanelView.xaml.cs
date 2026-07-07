@@ -42,6 +42,7 @@ public sealed partial class ExplorerPanelView : System.Windows.Controls.UserCont
         PreviewMouseLeftButtonUp += OnFieldDragPreviewMouseLeftButtonUp;
     }
 
+
     private ExplorerPanelViewModel? ViewModel => DataContext as ExplorerPanelViewModel;
 
     // ── Field drag source ────────────────────────────────────────────────────

@@ -15,56 +15,24 @@
 
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="48" />
             <RowDefinition Height="*" />
             <RowDefinition Height="28" />
         </Grid.RowDefinitions>
 
-        <Border Grid.Row="0"
-                Background="{DynamicResource PrimaryHueMidBrush}"
-                Padding="16,0">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-
-                <StackPanel Grid.Column="0" Orientation="Horizontal"
-                            VerticalAlignment="Center" behaviors:SpacingBehavior.Spacing="10">
-                    <md:PackIcon Kind="ChartAreaspline"
-                                 Width="28" Height="28"
-                                 Foreground="White"
-                                 VerticalAlignment="Center" />
-                    <TextBlock Text="NC VizDash"
-                               FontSize="18" FontWeight="Bold"
-                               Foreground="White"
-                               VerticalAlignment="Center" />
-                </StackPanel>
-
-                <ProgressBar Grid.Column="1"
-                             IsIndeterminate="{Binding IsLoading}"
-                             Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}"
-                             Style="{StaticResource MaterialDesignLinearProgressBar}"
-                             VerticalAlignment="Bottom"
-                             Margin="24,0" />
-
-                <StackPanel Grid.Column="2" Orientation="Horizontal"
-                            VerticalAlignment="Center" behaviors:SpacingBehavior.Spacing="8">
-                    <Button Style="{StaticResource MaterialDesignIconButton}"
-                            ToolTip="Pop out dashboard into its own window"
-                            Command="{Binding RequestPopOutCommand}"
-                            Foreground="White"
-                            Padding="4">
-                        <md:PackIcon Kind="OpenInNew" Width="20" Height="20" />
-                    </Button>
-                </StackPanel>
-            </Grid>
-        </Border>
-
-        <Grid Grid.Row="1">
+        <Grid Grid.Row="0">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="280" MinWidth="200" MaxWidth="400" />
+                <ColumnDefinition x:Name="ExplorerColumn" MinWidth="0" MaxWidth="400">
+                    <ColumnDefinition.Style>
+                        <Style TargetType="ColumnDefinition">
+                            <Setter Property="Width" Value="280" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding ExplorerPanel.IsCollapsed}" Value="True">
+                                    <Setter Property="Width" Value="36" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </ColumnDefinition.Style>
+                </ColumnDefinition>
                 <ColumnDefinition Width="4" />
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="4" />
@@ -77,7 +45,7 @@
                 <ContentControl Content="{Binding ExplorerPanel}">
                     <ContentControl.ContentTemplate>
                         <DataTemplate>
-                            <views:ExplorerPanelView DataContext="{Binding}" />
+                            <views:ExplorerPanelView x:Name="ExplorerView" DataContext="{Binding}" />
                         </DataTemplate>
                     </ContentControl.ContentTemplate>
                 </ContentControl>
@@ -89,13 +57,29 @@
 
             <Border Grid.Column="2"
                     Background="{DynamicResource MaterialDesignBackground}">
-                <ContentControl Content="{Binding CanvasPanel}">
-                    <ContentControl.ContentTemplate>
-                        <DataTemplate>
-                            <views:CanvasPanelView DataContext="{Binding}" />
-                        </DataTemplate>
-                    </ContentControl.ContentTemplate>
-                </ContentControl>
+                <Grid>
+                    <ContentControl Content="{Binding CanvasPanel}">
+                        <ContentControl.ContentTemplate>
+                            <DataTemplate>
+                                <views:CanvasPanelView DataContext="{Binding}" />
+                            </DataTemplate>
+                        </ContentControl.ContentTemplate>
+                    </ContentControl>
+
+                    <!-- Empty state — shown when no dashboard is open yet, so this
+                         area reads as "nothing here yet" rather than looking broken. -->
+                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center"
+                                behaviors:SpacingBehavior.Spacing="8"
+                                Visibility="{Binding CanvasPanel.ActiveDashboard, Converter={StaticResource NullToCollapsedConverter}, ConverterParameter=Invert}">
+                        <md:PackIcon Kind="ViewDashboardOutline" Width="48" Height="48"
+                                     HorizontalAlignment="Center" Foreground="#BDBDBD" />
+                        <TextBlock Text="No dashboard open"
+                                   FontSize="14" FontWeight="SemiBold"
+                                   Foreground="#9E9E9E" HorizontalAlignment="Center" />
+                        <TextBlock Text="Click Generate Dashboard or a Template to get started"
+                                   FontSize="12" Foreground="#BDBDBD" HorizontalAlignment="Center" />
+                    </StackPanel>
+                </Grid>
             </Border>
 
             <GridSplitter Grid.Column="3"
@@ -115,7 +99,7 @@
             </Border>
         </Grid>
 
-        <Border Grid.Row="2"
+        <Border Grid.Row="1"
                 Background="{DynamicResource MaterialDesignToolBarBackground}"
                 BorderBrush="{DynamicResource MaterialDesignDivider}"
                 BorderThickness="0,1,0,0"
@@ -127,7 +111,7 @@
         </Border>
 
         <!-- Full-pane loading overlay (refresh / generate dashboard) -->
-        <Border Grid.RowSpan="3"
+        <Border Grid.RowSpan="2"
                 Background="#AAFAFAFA"
                 Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
             <StackPanel HorizontalAlignment="Center"

@@ -19,15 +19,43 @@
         </Grid.RowDefinitions>
 
         <!-- Header -->
+        <!-- Header -->
         <Border Grid.Row="0"
                 Background="{DynamicResource MaterialDesignToolBarBackground}"
                 Padding="12,0">
             <Grid>
-                <TextBlock Text="Data Explorer"
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0"
+                           Text="Data Explorer"
                            FontWeight="SemiBold" FontSize="13"
                            VerticalAlignment="Center"
                            Foreground="{DynamicResource MaterialDesignBody}" />
-                <ProgressBar IsIndeterminate="True"
+
+                <Button Grid.Column="1"
+                        Style="{StaticResource MaterialDesignIconButton}"
+                        ToolTip="Collapse panel"
+                        Command="{Binding ToggleCollapseCommand}"
+                        Padding="4">
+                    <md:PackIcon Width="18" Height="18">
+                        <md:PackIcon.Style>
+                            <Style TargetType="md:PackIcon">
+                                <Setter Property="Kind" Value="ChevronLeft" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsCollapsed}" Value="True">
+                                        <Setter Property="Kind" Value="ChevronRight" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </md:PackIcon.Style>
+                    </md:PackIcon>
+                </Button>
+
+                <ProgressBar Grid.ColumnSpan="2"
+                             IsIndeterminate="True"
                              Height="2"
                              VerticalAlignment="Bottom"
                              Style="{StaticResource MaterialDesignLinearProgressBar}"

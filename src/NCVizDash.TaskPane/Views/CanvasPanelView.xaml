@@ -107,6 +107,18 @@
                         VerticalAlignment="Center"
                         Background="{DynamicResource MaterialDesignDivider}" />
 
+                <Border Width="1"
+                        Height="24"
+                        Margin="6,4"
+                        VerticalAlignment="Center"
+                        Background="{DynamicResource MaterialDesignDivider}" />
+
+                <Button Style="{StaticResource MaterialDesignIconButton}"
+                        ToolTip="Pop out dashboard into its own window"
+                        Click="PopOutToolbar_Click">
+                    <md:PackIcon Kind="OpenInNew" Width="18" Height="18" />
+                </Button>
+
                 <Button Content="Present"
                         Style="{StaticResource MaterialDesignFlatButton}"
                         FontSize="11"
@@ -182,13 +194,15 @@
 
         <!-- ── Global Filter Bar (Phase 9) ── -->
         <views:GlobalFilterBarView Grid.Row="2"
-                                    DataContext="{Binding GlobalFilterBar}" />
+                                    DataContext="{Binding GlobalFilterBar}"
+                                    Visibility="{Binding CanvasScrollVisibility}" />
 
         <!-- ── Canvas scroll host ── -->
         <ScrollViewer Grid.Row="3"
                       HorizontalScrollBarVisibility="Auto"
                       VerticalScrollBarVisibility="Auto"
-                      Background="#FAFAFA">
+                      Background="#FAFAFA"
+                      Visibility="{Binding CanvasScrollVisibility}">
 
             <!-- Minimum canvas size is always at least the scroll-viewer's viewport -->
             <Grid MinWidth="960" MinHeight="640"
@@ -240,5 +254,19 @@
                 </StackPanel>
             </Grid>
         </ScrollViewer>
+
+        <Border Grid.Row="3"
+                Background="{DynamicResource MaterialDesignBackground}"
+                Visibility="{Binding PoppedOutHintVisibility}">
+            <TextBlock Text="Dashboard is open in a separate window — use Dock back to return it here."
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center"
+                       FontSize="12"
+                       Foreground="{DynamicResource MaterialDesignBodyLight}"
+                       TextWrapping="Wrap"
+                       TextAlignment="Center"
+                       MaxWidth="360"
+                       Margin="16" />
+        </Border>
     </Grid>
 </UserControl>
