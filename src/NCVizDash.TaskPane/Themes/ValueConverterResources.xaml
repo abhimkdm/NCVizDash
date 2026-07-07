@@ -6,5 +6,6 @@
   <conv:InverseBooleanConverter x:Key="InverseBooleanConverter" />
   <conv:CountToVisibilityConverter x:Key="CountToVisibilityConverter" />
   <conv:NullToCollapsedConverter x:Key="NullToCollapsedConverter" />
+  <conv:NullToVisibleConverter x:Key="NullToVisibleConverter" />
   <conv:FilterValuesToStringConverter x:Key="FilterValuesToStringConverter" />
 </ResourceDictionary>

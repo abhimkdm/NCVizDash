@@ -70,7 +70,8 @@
                          area reads as "nothing here yet" rather than looking broken. -->
                     <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center"
                                 behaviors:SpacingBehavior.Spacing="8"
-                                Visibility="{Binding CanvasPanel.ActiveDashboard, Converter={StaticResource NullToCollapsedConverter}, ConverterParameter=Invert}">
+                                IsHitTestVisible="False"
+                                Visibility="{Binding CanvasPanel.ActiveDashboard, Converter={StaticResource NullToVisibleConverter}}">
                         <md:PackIcon Kind="ViewDashboardOutline" Width="48" Height="48"
                                      HorizontalAlignment="Center" Foreground="#BDBDBD" />
                         <TextBlock Text="No dashboard open"
