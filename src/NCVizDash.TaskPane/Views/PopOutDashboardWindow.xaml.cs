@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Input;
 using NCVizDash.TaskPane.Controls;
+using NCVizDash.TaskPane.ViewModels;
 
 namespace NCVizDash.TaskPane.Views;
 
@@ -12,33 +13,61 @@ namespace NCVizDash.TaskPane.Views;
 public sealed partial class PopOutDashboardWindow : Window
 {
     private readonly DashboardCanvas _canvas;
+    private readonly CanvasPanelViewModel _panel;
 
     /// <summary>Detaches <paramref name="canvas"/> into this window until it is closed.</summary>
-    public PopOutDashboardWindow(DashboardCanvas canvas)
+    public PopOutDashboardWindow(DashboardCanvas canvas, CanvasPanelViewModel panel)
     {
         InitializeComponent();
 
         _canvas = canvas;
+        _panel = panel;
         _canvas.IsHitTestVisible = true;
 
-        var dashboardName = canvas.ViewModel?.ActiveDashboard?.Name;
+        FilterBar.DataContext = panel.GlobalFilterBar;
+
+        var dashboardName = panel.ActiveDashboard?.Name;
         if (!string.IsNullOrWhiteSpace(dashboardName))
         {
             Title = $"NC VizDash — {dashboardName}";
             TitleText.Text = dashboardName;
         }
 
-        CanvasHostBorder.Child = _canvas;
+        CanvasHostGrid.Children.Add(_canvas);
 
-        Loaded += (_, _) =>
-        {
-            _canvas.InvalidateMeasure();
-            _canvas.InvalidateArrange();
-        };
+        Loaded += OnLoaded;
 
         // Release the canvas before Closed handlers in the task pane re-parent it.
-        Closing += (_, _) => CanvasHostBorder.Child = null;
+        Closing += (_, _) => CanvasReparentHelper.Detach(_canvas);
         Closed += (_, _) => _canvas.IsHitTestVisible = true;
+    }
+
+    private void OnLoaded(object sender, RoutedEventArgs e)
+    {
+        FitToWorkArea();
+
+        CanvasReparentHelper.ApplyCanvasBindings(_canvas, _panel);
+        _panel.RequestRenderAllWidgets();
+
+        _canvas.InvalidateMeasure();
+        _canvas.InvalidateArrange();
+        CanvasScrollViewer.ScrollToHorizontalOffset(0);
+        CanvasScrollViewer.ScrollToVerticalOffset(0);
+    }
+
+    /// <summary>Sizes and centers the window within the current monitor work area.</summary>
+    private void FitToWorkArea()
+    {
+        var area = SystemParameters.WorkArea;
+
+        MaxWidth = area.Width;
+        MaxHeight = area.Height;
+
+        Width = Math.Min(1024, Math.Max(MinWidth, area.Width * 0.92));
+        Height = Math.Min(720, Math.Max(MinHeight, area.Height * 0.88));
+
+        Left = area.Left + Math.Max(0, (area.Width - Width) / 2);
+        Top = area.Top + Math.Max(0, (area.Height - Height) / 2);
     }
 
     private void CloseButton_Click(object sender, RoutedEventArgs e) => Close();

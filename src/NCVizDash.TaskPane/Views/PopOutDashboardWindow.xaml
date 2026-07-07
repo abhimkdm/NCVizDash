@@ -3,33 +3,39 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:behaviors="clr-namespace:NCVizDash.TaskPane.Behaviors"
         xmlns:md="http://materialdesigninxaml.net/winfx/xaml/themes"
+        xmlns:views="clr-namespace:NCVizDash.TaskPane.Views"
         Title="NC VizDash — Dashboard"
-        Width="1280"
-        Height="800"
-        MinWidth="640"
-        MinHeight="480"
+        Width="1024"
+        Height="720"
+        MinWidth="400"
+        MinHeight="300"
+        ResizeMode="CanResize"
         WindowStartupLocation="CenterScreen"
         Background="{DynamicResource MaterialDesignBackground}"
         TextElement.Foreground="{DynamicResource MaterialDesignBody}"
         FontFamily="{md:MaterialDesignFont}"
         KeyDown="Window_KeyDown">
 
-    <!-- Popped-out dashboard: same live DashboardCanvas as the task pane (re-parented),
-         non-modal and fully editable — unlike PresentationWindow, which is view-only. -->
+    <!-- Popped-out dashboard: toolbar stays fixed; canvas scrolls when content is larger than the viewport. -->
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="40" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
+        <!-- Fixed chrome — always visible above the scrollable canvas area. -->
         <Border Grid.Row="0"
-                Background="{DynamicResource MaterialDesignToolBarBackground}"
-                BorderBrush="{DynamicResource MaterialDesignDivider}"
+                Panel.ZIndex="1"
+                MinHeight="44"
+                Background="{DynamicResource PrimaryHueMidBrush}"
+                BorderBrush="{DynamicResource PrimaryHueDarkBrush}"
                 BorderThickness="0,0,0,1"
-                Padding="12,0">
+                Padding="10,6"
+                SnapsToDevicePixels="True">
             <Grid>
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" MinWidth="80" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
@@ -41,35 +47,51 @@
                                  Width="18"
                                  Height="18"
                                  VerticalAlignment="Center"
-                                 Foreground="{DynamicResource PrimaryHueMidBrush}" />
+                                 Foreground="White" />
                     <TextBlock x:Name="TitleText"
                                Text="Dashboard"
                                FontWeight="SemiBold"
                                FontSize="13"
-                               VerticalAlignment="Center" />
+                               Foreground="White"
+                               VerticalAlignment="Center"
+                               TextTrimming="CharacterEllipsis"
+                               MaxWidth="420" />
                 </StackPanel>
 
                 <StackPanel Grid.Column="1"
                             Orientation="Horizontal"
                             VerticalAlignment="Center"
-                            behaviors:SpacingBehavior.Spacing="4">
+                            behaviors:SpacingBehavior.Spacing="2">
                     <Button Content="Dock back"
-                            Style="{StaticResource MaterialDesignFlatButton}"
-                            Padding="12,4"
+                            Padding="10,4"
+                            Foreground="White"
+                            BorderBrush="#80FFFFFF"
+                            Background="Transparent"
                             ToolTip="Return the dashboard to the task pane"
                             Click="CloseButton_Click" />
                     <Button Style="{StaticResource MaterialDesignIconButton}"
+                            Foreground="White"
                             ToolTip="Close and dock back to task pane"
                             Click="CloseButton_Click">
-                        <md:PackIcon Kind="Close" Width="18" Height="18" />
+                        <md:PackIcon Kind="Close" Width="20" Height="20" />
                     </Button>
                 </StackPanel>
             </Grid>
         </Border>
 
-        <Border x:Name="CanvasHostBorder"
-                Grid.Row="1"
-                Background="{DynamicResource MaterialDesignPaper}"
-                ClipToBounds="True" />
+        <views:GlobalFilterBarView x:Name="FilterBar"
+                                   Grid.Row="1" />
+
+        <ScrollViewer Grid.Row="2"
+                      x:Name="CanvasScrollViewer"
+                      HorizontalScrollBarVisibility="Auto"
+                      VerticalScrollBarVisibility="Auto"
+                      Background="#FAFAFA"
+                      Focusable="False">
+            <Grid x:Name="CanvasHostGrid"
+                  MinWidth="960"
+                  MinHeight="640"
+                  Background="#FAFAFA" />
+        </ScrollViewer>
     </Grid>
 </Window>

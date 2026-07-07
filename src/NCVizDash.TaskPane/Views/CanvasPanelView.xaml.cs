@@ -128,10 +128,15 @@ public sealed partial class CanvasPanelView : System.Windows.Controls.UserContro
         if (ViewModel is not { ActiveDashboard: { } dashboard } vm) return;
         if (TheCanvas.Parent is not Grid hostGrid) return;
 
+        CanvasReparentHelper.ApplyCanvasBindings(TheCanvas, vm);
         hostGrid.Children.Remove(TheCanvas);
 
         var window = new PresentationWindow(vm.Presentation, vm.GlobalFilterManager, TheCanvas, dashboard.Id);
-        window.Closed += (_, _) => CanvasReparentHelper.RestoreToGrid(TheCanvas, hostGrid);
+        window.Closed += (_, _) =>
+        {
+            CanvasReparentHelper.RestoreToGrid(TheCanvas, hostGrid);
+            CanvasReparentHelper.ApplyCanvasBindings(TheCanvas, vm);
+        };
         window.ShowDialog();
 
     }
@@ -145,10 +150,16 @@ public sealed partial class CanvasPanelView : System.Windows.Controls.UserContro
     {
         if (ViewModel is null) return;
         if (TheCanvas.Parent is not Grid hostGrid) return;
+
+        CanvasReparentHelper.ApplyCanvasBindings(TheCanvas, ViewModel);
         hostGrid.Children.Remove(TheCanvas);
 
-        var window = new PopOutDashboardWindow(TheCanvas);
-        window.Closed += (_, _) => CanvasReparentHelper.RestoreToGrid(TheCanvas, hostGrid);
+        var window = new PopOutDashboardWindow(TheCanvas, ViewModel);
+        window.Closed += (_, _) =>
+        {
+            CanvasReparentHelper.RestoreToGrid(TheCanvas, hostGrid);
+            CanvasReparentHelper.ApplyCanvasBindings(TheCanvas, ViewModel);
+        };
         window.Show(); // non-modal — Excel and the popped-out window are both usable
     }
 }
