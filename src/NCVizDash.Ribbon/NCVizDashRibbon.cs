@@ -20,6 +20,7 @@ public sealed class NCVizDashRibbon : IRibbonExtensibility
     // ── Fields ──────────────────────────────────────────────────────────────
     private IRibbonUI? _ribbon;
     private bool _taskPaneVisible;
+    private bool _aiReportPaneVisible;
 
     private readonly ILogger<NCVizDashRibbon> _logger;
 
@@ -52,6 +53,9 @@ public sealed class NCVizDashRibbon : IRibbonExtensibility
 
     /// <summary>Raised when the user requests the AI settings dialog.</summary>
     public event EventHandler? AiSettingsRequested;
+
+    /// <summary>Raised when the user toggles the AI Report Generator pane.</summary>
+    public event EventHandler<bool>? AiReportPaneToggleRequested;
 
     /// <summary>Raised when the user changes the active theme.</summary>
     public event EventHandler<string>? ThemeChangeRequested;
@@ -193,11 +197,36 @@ public sealed class NCVizDashRibbon : IRibbonExtensibility
     /// <summary>Returns whether the task pane is currently visible (drives toggle state).</summary>
     public bool BtnToggleTaskPane_GetPressed(IRibbonControl control) => _taskPaneVisible;
 
+    /// <summary>Toggle AI Report Generator pane button.</summary>
+    public void BtnToggleAiReport_Click(IRibbonControl control, bool pressed)
+    {
+        _aiReportPaneVisible = pressed;
+        _logger.LogInformation("AI Report pane visibility toggled: {Visible}", pressed);
+        AiReportPaneToggleRequested?.Invoke(this, pressed);
+    }
+
+    /// <summary>Returns whether the AI Report pane is visible (drives toggle state).</summary>
+    public bool BtnToggleAiReport_GetPressed(IRibbonControl control) => _aiReportPaneVisible;
+
     /// <summary>Theme combo-box change.</summary>
     public void CmbTheme_Change(IRibbonControl control, string text)
     {
         _logger.LogInformation("Theme changed to '{Theme}'.", text);
         ThemeChangeRequested?.Invoke(this, text);
+    }
+
+    /// <summary>Settings → Theme → Light.</summary>
+    public void BtnThemeLight_Click(IRibbonControl control)
+    {
+        _logger.LogInformation("Theme changed to 'Light'.");
+        ThemeChangeRequested?.Invoke(this, "Light");
+    }
+
+    /// <summary>Settings → Theme → Dark.</summary>
+    public void BtnThemeDark_Click(IRibbonControl control)
+    {
+        _logger.LogInformation("Theme changed to 'Dark'.");
+        ThemeChangeRequested?.Invoke(this, "Dark");
     }
 
     // ── Export callbacks ──────────────────────────────────────────────────────
@@ -257,4 +286,11 @@ public sealed class NCVizDashRibbon : IRibbonExtensibility
     /// <summary>Notifies Excel to repaint the task pane toggle button.</summary>
     public void InvalidateTaskPaneButton() =>
         _ribbon?.InvalidateControl("btnToggleTaskPane");
+
+    /// <summary>Updates ribbon toggle state when the AI Report pane is shown or hidden externally.</summary>
+    public void SetAiReportPaneVisible(bool visible)
+    {
+        _aiReportPaneVisible = visible;
+        _ribbon?.InvalidateControl("btnToggleAiReport");
+    }
 }

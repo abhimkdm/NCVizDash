@@ -4,8 +4,9 @@
 
   <ribbon>
     <tabs>
-      <tab id="tabNCVizDash" label="NC VizDash" insertAfterMso="TabView">
+      <tab id="tabNCVizDash" label="VizDash" insertAfterMso="TabView">
 
+        <!-- ── Dashboard ─────────────────────────────────────────────── -->
         <group id="grpDashboard" label="Dashboard">
           <button id="btnGenerateDashboard"
                   label="Generate Dashboard"
@@ -15,49 +16,58 @@
                   size="large"
                   onAction="BtnGenerateDashboard_Click" />
 
-          <button id="btnOpenDashboard"
-                  label="Open"
-                  screentip="Open a saved dashboard"
-                  supertip="Browse dashboards saved in this workbook."
-                  imageMso="FileOpen"
-                  size="normal"
-                  onAction="BtnOpenDashboard_Click" />
-
-          <button id="btnSaveDashboard"
-                  label="Save"
-                  screentip="Save the current dashboard"
-                  supertip="Saves widget layout, filters, and settings into the workbook."
-                  imageMso="FileSave"
-                  size="normal"
-                  onAction="BtnSaveDashboard_Click" />
-
           <button id="btnTemplates"
                   label="Templates"
                   screentip="Browse dashboard templates"
                   supertip="Pick a pre-built template (Sales, Finance, HR, PMO, and more) — fields are mapped from your data automatically."
                   imageMso="TemplatePublish"
-                  size="normal"
+                  size="large"
                   onAction="BtnTemplates_Click" />
         </group>
 
+        <!-- ── AI (standalone Smart Report bot — separate from VizDash dashboards) ── -->
+        <group id="grpAi" label="AI">
+          <toggleButton id="btnToggleAiReport"
+                        label="AI Report"
+                        screentip="AI Report Generator"
+                        supertip="Ask for reports in plain language, use one-click quick actions, and preview drafts with detected insights before inserting them into the workbook. Independent of the VizDash dashboard pane."
+                        imageMso="ResearchPane"
+                        size="large"
+                        onAction="BtnToggleAiReport_Click"
+                        getPressed="BtnToggleAiReport_GetPressed" />
+        </group>
+
+        <!-- ── Data ──────────────────────────────────────────────────── -->
         <group id="grpData" label="Data">
-          <button id="btnRefreshData"
-                  label="Refresh"
-                  screentip="Refresh all data sources"
-                  supertip="Re-reads all Excel tables and named ranges into the analytics engine."
-                  imageMso="RefreshAll"
-                  size="large"
-                  onAction="BtnRefreshData_Click" />
+          <splitButton id="splitRefresh" size="large">
+            <button id="btnRefreshData"
+                    label="Refresh"
+                    screentip="Refresh all data sources"
+                    supertip="Re-reads all Excel tables and named ranges into the analytics engine."
+                    imageMso="RefreshAll"
+                    onAction="BtnRefreshData_Click" />
+            <menu id="mnuRefresh" itemSize="normal">
+              <button id="btnRefreshAll"
+                      label="Refresh All"
+                      imageMso="RefreshAll"
+                      onAction="BtnRefreshData_Click" />
+              <button id="btnRefreshDataSources"
+                      label="Refresh &amp; Manage Sources…"
+                      imageMso="DataConnectionProperties"
+                      onAction="BtnDataSources_Click" />
+            </menu>
+          </splitButton>
 
           <button id="btnDataSources"
                   label="Data Sources"
                   screentip="Manage external data sources"
                   supertip="Connect to SQL Server, CSV, REST APIs, Jira, and more."
                   imageMso="DataConnectionProperties"
-                  size="normal"
+                  size="large"
                   onAction="BtnDataSources_Click" />
         </group>
 
+        <!-- ── View ──────────────────────────────────────────────────── -->
         <group id="grpView" label="View">
           <toggleButton id="btnToggleTaskPane"
                         label="Task Pane"
@@ -68,34 +78,17 @@
                         onAction="BtnToggleTaskPane_Click"
                         getPressed="BtnToggleTaskPane_GetPressed" />
 
-         <button id="btnPresent"
-                  label="Present"
-                  screentip="Full-screen presentation mode"
-                  supertip="Present the current dashboard full-screen, stepping through saved bookmarks."
-                  imageMso="SlideShowFromBeginning"
-                  size="normal"
-                  onAction="BtnPresent_Click" />
-
           <button id="btnPopOut"
                   label="Pop Out"
                   screentip="Open the dashboard in its own window"
                   supertip="Detaches the dashboard into a separate, resizable window — drag it to a second monitor while Excel keeps running behind it. Editing stays enabled, unlike Present."
                   imageMso="NewWindow"
-                  size="normal"
+                  size="large"
                   onAction="BtnPopOut_Click" />
-
-          <comboBox id="cmbTheme"
-                    label="Theme"
-                    screentip="Switch between Light and Dark themes"
-                    supertip="Changes the dashboard colour theme."
-                    onChange="CmbTheme_Change"
-                    showItemImage="false">
-            <item id="themeLight" label="Light" />
-            <item id="themeDark"  label="Dark"  />
-          </comboBox>
         </group>
 
-        <group id="grpExport" label="Export">
+        <!-- ── Export & Help ─────────────────────────────────────────── -->
+        <group id="grpExportHelp" label="Export &amp; Help">
           <splitButton id="splitExport" size="large">
             <button id="btnExportPDF"
                     label="Export PDF"
@@ -116,24 +109,46 @@
                       onAction="BtnExportSnapshot_Click" />
             </menu>
           </splitButton>
-        </group>
 
-        <group id="grpHelp" label="Help &amp; Settings">
-          <button id="btnAiSettings"
-                  label="AI Settings"
-                  screentip="Configure optional AI features"
-                  supertip="AI is fully optional and off by default. Enable it here and choose a provider if you want chart explanations and insight summaries."
-                  imageMso="ControlProperties"
-                  size="normal"
-                  onAction="BtnAiSettings_Click" />
-
-          <button id="btnAbout"
-                  label="About"
-                  screentip="About NC VizDash"
-                  supertip="Version information and licence details."
-                  imageMso="Help"
-                  size="normal"
-                  onAction="BtnAbout_Click" />
+          <menu id="mnuSettings"
+                label="Settings"
+                screentip="VizDash settings and tools"
+                supertip="Open or save dashboards, present, switch themes, configure AI, and view About."
+                imageMso="ControlProperties"
+                size="large"
+                itemSize="normal">
+            <button id="btnOpenDashboard"
+                    label="Open Dashboard…"
+                    imageMso="FileOpen"
+                    onAction="BtnOpenDashboard_Click" />
+            <button id="btnSaveDashboard"
+                    label="Save Dashboard"
+                    imageMso="FileSave"
+                    onAction="BtnSaveDashboard_Click" />
+            <menuSeparator id="sepSettings1" />
+            <button id="btnPresent"
+                    label="Present (Story Mode)"
+                    imageMso="SlideShowFromBeginning"
+                    onAction="BtnPresent_Click" />
+            <menuSeparator id="sepSettings2" />
+            <menu id="mnuTheme" label="Theme" imageMso="ColorPicker" itemSize="normal">
+              <button id="btnThemeLight"
+                      label="Light"
+                      onAction="BtnThemeLight_Click" />
+              <button id="btnThemeDark"
+                      label="Dark"
+                      onAction="BtnThemeDark_Click" />
+            </menu>
+            <button id="btnAiSettings"
+                    label="AI Settings…"
+                    imageMso="ControlProperties"
+                    onAction="BtnAiSettings_Click" />
+            <menuSeparator id="sepSettings3" />
+            <button id="btnAbout"
+                    label="About NC VizDash"
+                    imageMso="Help"
+                    onAction="BtnAbout_Click" />
+          </menu>
         </group>
 
       </tab>
