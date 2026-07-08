@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Text.RegularExpressions;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -15,6 +16,21 @@ namespace NCVizDash.TaskPane.ViewModels;
 
 /// <summary>A single bar in the report-preview mini chart (height in device-independent pixels).</summary>
 public sealed record PreviewBar(string Label, double Height, bool IsHighlight);
+
+/// <summary>
+/// Everything needed to materialise a previewed report into the workbook or onto
+/// the clipboard: the category/value series behind the preview, the chart kind
+/// key (matches the \directive vocabulary — "bar", "pie", "line", …), and the
+/// narrative text shown alongside it.
+/// </summary>
+public sealed record ReportDraft(
+    string Prompt,
+    string ChartKind,
+    string ChartTypeLabel,
+    IReadOnlyList<string> Categories,
+    IReadOnlyList<double> Values,
+    string InsightText,
+    string SeriesName);
 
 /// <summary>
 /// Drives the AI Report Generator task pane — a standalone assistant, deliberately
@@ -38,7 +54,10 @@ public sealed partial class AiReportPaneViewModel : ObservableObject
     public event EventHandler? CloseRequested;
 
     /// <summary>Raised when the user confirms inserting the drafted report.</summary>
-    public event EventHandler<string>? InsertRequested;
+    public event EventHandler<ReportDraft>? InsertRequested;
+
+    /// <summary>Raised when the user asks to copy the chart to the clipboard for email.</summary>
+    public event EventHandler<ReportDraft>? CopyForEmailRequested;
 
     // ── Bindable state ───────────────────────────────────────────────────────
 
@@ -64,6 +83,10 @@ public sealed partial class AiReportPaneViewModel : ObservableObject
 
     [ObservableProperty]
     private ObservableCollection<PreviewBar> _previewBars = [];
+
+    /// <summary>Raw chart-kind key ("bar", "pie", "line", …) — used when building the real chart.</summary>
+    [ObservableProperty]
+    private string _chartKind = "column";
 
     /// <summary>Human-readable chart type shown on the preview badge ("Column", "Pie", …).</summary>
     [ObservableProperty]
@@ -175,7 +198,16 @@ public sealed partial class AiReportPaneViewModel : ObservableObject
     {
         if (!HasDraft) return;
         _logger.LogInformation("Inserting AI report draft into workbook.");
-        InsertRequested?.Invoke(this, Prompt);
+        InsertRequested?.Invoke(this, BuildDraft());
+    }
+
+    /// <summary>Copies just the chart to the clipboard, ready to paste into an email.</summary>
+    [RelayCommand]
+    private void CopyChartForEmail()
+    {
+        if (!HasDraft) return;
+        _logger.LogInformation("Copying AI report chart to clipboard for email.");
+        CopyForEmailRequested?.Invoke(this, BuildDraft());
     }
 
     /// <summary>Returns focus to the prompt so the user can iterate on the draft.</summary>
@@ -185,6 +217,16 @@ public sealed partial class AiReportPaneViewModel : ObservableObject
         _logger.LogInformation("User refining AI report draft.");
         HasDraft = false;
     }
+
+    /// <summary>Snapshots the current preview into an immutable draft for the host to materialise.</summary>
+    private ReportDraft BuildDraft() => new(
+        Prompt: Prompt,
+        ChartKind: ChartKind,
+        ChartTypeLabel: ChartTypeLabel,
+        Categories: PreviewBars.Select(b => b.Label).ToList(),
+        Values: PreviewBars.Select(b => b.Height).ToList(),
+        InsightText: InsightText,
+        SeriesName: "Value");
 
     // ── Chart directives & connection status ────────────────────────────────
 
@@ -206,18 +248,21 @@ public sealed partial class AiReportPaneViewModel : ObservableObject
 
     private void ApplyChartType(string? chartType)
     {
-        (ChartTypeLabel, ChartIconKind, IsBarPreview) = chartType switch
+        var normalized = chartType is "donut" ? "doughnut" : chartType ?? "column";
+        ChartKind = normalized;
+
+        (ChartTypeLabel, ChartIconKind, IsBarPreview) = normalized switch
         {
-            "bar"                => ("Bar",     PackIconKind.ChartBar,          true),
-            "column" or null     => ("Column",  PackIconKind.ChartBar,          true),
-            "pie"                => ("Pie",     PackIconKind.ChartPie,          false),
-            "donut" or "doughnut"=> ("Donut",   PackIconKind.ChartDonut,        false),
-            "line"               => ("Line",    PackIconKind.ChartLineVariant,  false),
-            "area"               => ("Area",    PackIconKind.ChartAreaspline,   false),
-            "scatter"            => ("Scatter", PackIconKind.ChartScatterPlot,  false),
-            "kpi"                => ("KPI",     PackIconKind.Numeric,           false),
-            "table"              => ("Table",   PackIconKind.Table,             false),
-            _                    => ("Column",  PackIconKind.ChartBar,          true),
+            "bar"       => ("Bar",     PackIconKind.ChartBar,          true),
+            "column"    => ("Column",  PackIconKind.ChartBar,          true),
+            "pie"       => ("Pie",     PackIconKind.ChartPie,          false),
+            "doughnut"  => ("Donut",   PackIconKind.ChartDonut,        false),
+            "line"      => ("Line",    PackIconKind.ChartLineVariant,  false),
+            "area"      => ("Area",    PackIconKind.ChartAreaspline,   false),
+            "scatter"   => ("Scatter", PackIconKind.ChartScatterPlot,  false),
+            "kpi"       => ("KPI",     PackIconKind.Numeric,           false),
+            "table"     => ("Table",   PackIconKind.Table,             false),
+            _           => ("Column",  PackIconKind.ChartBar,          true),
         };
     }
 

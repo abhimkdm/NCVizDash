@@ -336,6 +336,7 @@ public sealed partial class ThisAddIn
             _ribbon?.SetAiReportPaneVisible(_aiReportPane?.Visible ?? false);
         viewModel.CloseRequested += (_, _) => SetAiReportPaneVisible(false);
         viewModel.InsertRequested += OnAiReportInsertRequested;
+        viewModel.CopyForEmailRequested += OnAiReportCopyForEmailRequested;
 
         _logger?.LogInformation("AI Report pane created (hidden).");
     }
@@ -372,10 +373,8 @@ public sealed partial class ThisAddIn
         _ribbon?.SetAiReportPaneVisible(visible);
     }
 
-    private void OnAiReportInsertRequested(object? sender, string prompt)
+    private void OnAiReportInsertRequested(object? sender, NCVizDash.TaskPane.ViewModels.ReportDraft draft)
     {
-        // Phase 1: land the draft on a new worksheet stub. Later phases will
-        // materialise the previewed chart + insight table via the chart engine.
         try
         {
             var wb = Application.ActiveWorkbook;
@@ -383,13 +382,160 @@ public sealed partial class ThisAddIn
 
             var sheet = (Microsoft.Office.Interop.Excel.Worksheet)wb.Worksheets.Add();
             sheet.Name = GetUniqueSheetName(wb, "AI Report");
-            sheet.Cells[1, 1] = "VizDash AI Report";
-            sheet.Cells[2, 1] = $"Prompt: {prompt}";
-            _logger?.LogInformation("AI report inserted into sheet '{Sheet}'.", sheet.Name);
+
+            var dataRange = WriteReportData(sheet, draft);
+
+            if (TryGetXlChartType(draft.ChartKind, out var xlChartType))
+            {
+                var chartObj = ((Microsoft.Office.Interop.Excel.ChartObjects)sheet.ChartObjects()).Add(
+                    Left: 260, Top: 10, Width: 420, Height: 260);
+                var chart = chartObj.Chart;
+                chart.SetSourceData(dataRange);
+                chart.ChartType = xlChartType;
+                chart.HasTitle = true;
+                chart.ChartTitle.Text = $"{draft.ChartTypeLabel} — {draft.SeriesName}";
+            }
+            else
+            {
+                // KPI / Table drafts have no chart geometry — the data table itself is the report.
+                _logger?.LogInformation(
+                    "Chart kind '{Kind}' has no chart representation; inserted as a data table only.",
+                    draft.ChartKind);
+            }
+
+            ((Microsoft.Office.Interop.Excel.Range)sheet.Columns["A:B"]).AutoFit();
+            _logger?.LogInformation(
+                "AI report ({Chart}) inserted into sheet '{Sheet}'.", draft.ChartTypeLabel, sheet.Name);
         }
         catch (Exception ex)
         {
             _logger?.LogError(ex, "Failed to insert AI report into workbook.");
+        }
+    }
+
+    /// <summary>
+    /// Copies just the chart image to the clipboard so it can be pasted directly
+    /// into an email or chat message. Builds the chart on a throwaway scratch
+    /// sheet with screen updating suspended — so the user never sees it — then
+    /// restores the user's original active sheet and removes the scratch sheet.
+    /// </summary>
+    /// <remarks>
+    /// Deliberately does NOT set the scratch sheet to <c>xlSheetVeryHidden</c>
+    /// while it's still the active sheet: Excel can throw HRESULT 0x800A03EC
+    /// ("Application-defined or object-defined error") from <c>Worksheet.Delete()</c>
+    /// when asked to delete a hidden sheet that is also the current active sheet.
+    /// Suspending Excel's <c>Application.ScreenUpdating</c>
+    /// achieves the same "invisible to the user" goal without that failure mode.
+    /// </remarks>
+    private void OnAiReportCopyForEmailRequested(object? sender, NCVizDash.TaskPane.ViewModels.ReportDraft draft)
+    {
+        var wb = Application.ActiveWorkbook;
+        if (wb is null) return;
+
+        var alertsWereOn = Application.DisplayAlerts;
+        var screenUpdatingWasOn = Application.ScreenUpdating;
+        var originalActiveSheet = wb.ActiveSheet as Microsoft.Office.Interop.Excel.Worksheet;
+        Microsoft.Office.Interop.Excel.Worksheet? scratch = null;
+
+        try
+        {
+            Application.ScreenUpdating = false;
+
+            scratch = (Microsoft.Office.Interop.Excel.Worksheet)wb.Worksheets.Add();
+
+            var dataRange = WriteReportData(scratch, draft);
+
+            var chartObj = ((Microsoft.Office.Interop.Excel.ChartObjects)scratch.ChartObjects()).Add(Left: 0, Top: 0, Width: 480, Height: 300);
+            var chart = chartObj.Chart;
+            chart.SetSourceData(dataRange);
+            chart.ChartType = TryGetXlChartType(draft.ChartKind, out var xlChartType)
+                ? xlChartType
+                : Microsoft.Office.Interop.Excel.XlChartType.xlColumnClustered;
+            chart.HasTitle = true;
+            chart.ChartTitle.Text = $"{draft.ChartTypeLabel} — {draft.SeriesName}";
+
+            chart.CopyPicture(
+                Microsoft.Office.Interop.Excel.XlPictureAppearance.xlScreen,
+                Microsoft.Office.Interop.Excel.XlCopyPictureFormat.xlBitmap,
+                Microsoft.Office.Interop.Excel.XlPictureAppearance.xlScreen);
+
+            _logger?.LogInformation("AI report chart copied to clipboard for email.");
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex, "Failed to copy AI report chart to clipboard.");
+        }
+        finally
+        {
+            // Hand the active-sheet focus back before touching the scratch sheet's
+            // lifecycle — deleting the still-active sheet is what throws 0x800A03EC.
+            try { originalActiveSheet?.Activate(); }
+            catch (Exception ex) { _logger?.LogWarning(ex, "Could not reactivate the original sheet."); }
+
+            if (scratch is not null)
+            {
+                Application.DisplayAlerts = false;
+                try { scratch.Delete(); }
+                catch (Exception ex) { _logger?.LogWarning(ex, "Could not remove the AI report scratch sheet."); }
+                finally { Application.DisplayAlerts = alertsWereOn; }
+            }
+
+            Application.ScreenUpdating = screenUpdatingWasOn;
+        }
+    }
+
+    /// <summary>Writes the category/value table backing a report draft and returns the data range.</summary>
+    private static Microsoft.Office.Interop.Excel.Range WriteReportData(
+        Microsoft.Office.Interop.Excel.Worksheet sheet, NCVizDash.TaskPane.ViewModels.ReportDraft draft)
+    {
+        sheet.Cells[1, 1] = "VizDash AI Report";
+        sheet.Cells[2, 1] = $"Prompt: {draft.Prompt}";
+        sheet.Cells[3, 1] = draft.InsightText;
+
+        const int headerRow = 5;
+        sheet.Cells[headerRow, 1] = "Category";
+        sheet.Cells[headerRow, 2] = draft.SeriesName;
+
+        for (var i = 0; i < draft.Categories.Count; i++)
+        {
+            sheet.Cells[headerRow + 1 + i, 1] = draft.Categories[i];
+            sheet.Cells[headerRow + 1 + i, 2] = draft.Values[i];
+        }
+
+        var lastRow = headerRow + draft.Categories.Count;
+        return sheet.Range[sheet.Cells[headerRow, 1], sheet.Cells[lastRow, 2]];
+    }
+
+    /// <summary>Maps a \directive chart-kind key to its native Excel chart type, if chartable.</summary>
+    private static bool TryGetXlChartType(
+        string chartKind, out Microsoft.Office.Interop.Excel.XlChartType xlChartType)
+    {
+        switch (chartKind)
+        {
+            case "bar":
+                xlChartType = Microsoft.Office.Interop.Excel.XlChartType.xlBarClustered;
+                return true;
+            case "column":
+                xlChartType = Microsoft.Office.Interop.Excel.XlChartType.xlColumnClustered;
+                return true;
+            case "pie":
+                xlChartType = Microsoft.Office.Interop.Excel.XlChartType.xlPie;
+                return true;
+            case "doughnut":
+                xlChartType = Microsoft.Office.Interop.Excel.XlChartType.xlDoughnut;
+                return true;
+            case "line":
+                xlChartType = Microsoft.Office.Interop.Excel.XlChartType.xlLine;
+                return true;
+            case "area":
+                xlChartType = Microsoft.Office.Interop.Excel.XlChartType.xlArea;
+                return true;
+            case "scatter":
+                xlChartType = Microsoft.Office.Interop.Excel.XlChartType.xlXYScatter;
+                return true;
+            default: // "kpi", "table" — no chart geometry
+                xlChartType = default;
+                return false;
         }
     }
 

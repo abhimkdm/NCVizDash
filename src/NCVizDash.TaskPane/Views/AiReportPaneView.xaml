@@ -90,6 +90,20 @@
                         <TextBlock Text="Insert into Workbook" Margin="8,0,0,0" />
                     </StackPanel>
                 </Button>
+                <Button Command="{Binding CopyChartForEmailCommand}"
+                        IsEnabled="{Binding HasDraft}"
+                        Margin="0,8,0,0" Height="36"
+                        Foreground="{StaticResource AiInk}"
+                        BorderBrush="{StaticResource AiCardBorder}"
+                        md:ButtonAssist.CornerRadius="8"
+                        ToolTip="Copies just the chart image — paste it straight into an email or chat."
+                        Style="{StaticResource MaterialDesignOutlinedButton}">
+                    <StackPanel Orientation="Horizontal">
+                        <md:PackIcon Kind="ContentCopy" Width="14" Height="14"
+                                     VerticalAlignment="Center" />
+                        <TextBlock Text="Copy Chart for Email" Margin="8,0,0,0" />
+                    </StackPanel>
+                </Button>
                 <Button Command="{Binding RefineDraftCommand}"
                         IsEnabled="{Binding HasDraft}"
                         Margin="0,8,0,0" Height="36"
