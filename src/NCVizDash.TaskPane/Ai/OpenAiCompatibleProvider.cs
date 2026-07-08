@@ -161,8 +161,8 @@ public sealed class AzureOpenAiProvider(HttpClient httpClient, IAppSettingsProvi
 }
 
 /// <summary>
-/// Kimi by Moonshot AI — OpenAI-compatible chat completions with Bearer-key auth.
-/// Get a key at https://platform.moonshot.ai; models include "moonshot-v1-8k" and
+/// Kimi by k2.6 AI — OpenAI-compatible chat completions with Bearer-key auth.
+/// Get a key at https://platform.k2.6.ai; models include "kimi-k2.6" and
 /// the "kimi-k2-*" family (set the exact model in Settings → AI → Model).
 /// </summary>
 public sealed class KimiProvider(HttpClient httpClient, IAppSettingsProvider settings, ILogger<KimiProvider> logger)
@@ -171,10 +171,10 @@ public sealed class KimiProvider(HttpClient httpClient, IAppSettingsProvider set
     /// <inheritdoc/>
     public override string ProviderId => "kimi";
     /// <inheritdoc/>
-    protected override string DefaultModel => "moonshot-v1-8k";
+    protected override string DefaultModel => "kimi-k2.6";
     /// <inheritdoc/>
     protected override string Endpoint => string.IsNullOrWhiteSpace(Settings.Settings.AiEndpoint)
-        ? "https://api.moonshot.ai/v1/chat/completions" // use https://api.moonshot.cn/... for the CN region
+        ? "https://api.k2.6.ai/v1/chat/completions" // use https://api.k2.6.cn/... for the CN region
         : Settings.Settings.AiEndpoint;
     /// <inheritdoc/>
     protected override void ApplyAuth(HttpRequestMessage request) =>

@@ -23,7 +23,7 @@
             <ComboBoxItem Content="OpenAI" Tag="openai" />
             <ComboBoxItem Content="Azure OpenAI" Tag="azure-openai" />
             <ComboBoxItem Content="Anthropic" Tag="anthropic" />
-            <ComboBoxItem Content="Kimi (Moonshot AI)" Tag="kimi" />
+            <ComboBoxItem Content="Kimi (k2.6 AI)" Tag="kimi" />
             <ComboBoxItem Content="Local (Ollama / LM Studio)" Tag="local" />
             <ComboBoxItem Content="Other (OpenAI-compatible)" Tag="custom" />
         </ComboBox>
@@ -32,7 +32,7 @@
                    Text="Ollama: run 'ollama serve' and pull a model (e.g. 'ollama pull llama3.1'). No API key needed — leave it blank." />
         <TextBlock x:Name="KimiHintText" TextWrapping="Wrap" FontSize="11" Margin="0,-10,0,12"
                    Foreground="{DynamicResource MaterialDesignBodyLight}" Visibility="Collapsed"
-                   Text="Kimi: create an API key at platform.moonshot.ai and paste it below. Models: moonshot-v1-8k, kimi-k2 family. CN-region accounts: set the endpoint to https://api.moonshot.cn/v1/chat/completions." />
+                   Text="Kimi: create an API key at platform.k2.6.ai and paste it below. Models: kimi-k2.6, kimi-k2 family. CN-region accounts: set the endpoint to https://api.k2.6.cn/v1/chat/completions." />
         <TextBlock x:Name="CustomHintText" TextWrapping="Wrap" FontSize="11" Margin="0,-10,0,12"
                    Foreground="{DynamicResource MaterialDesignBodyLight}" Visibility="Collapsed"
                    Text="Other providers (DeepSeek, Groq, Mistral, OpenRouter, vLLM, …): paste the full chat-completions URL as the endpoint, the model name, and your key. The key is sent as a Bearer token." />

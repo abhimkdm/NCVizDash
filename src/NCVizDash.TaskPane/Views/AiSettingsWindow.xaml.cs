@@ -87,7 +87,7 @@ public sealed partial class AiSettingsWindow : Window
         }
         else if (tag == "kimi" && string.IsNullOrWhiteSpace(ModelTextBox.Text))
         {
-            ModelTextBox.Text = "moonshot-v1-8k";
+            ModelTextBox.Text = "kimi-k2.6";
         }
     }
 
@@ -116,7 +116,7 @@ public sealed partial class AiSettingsWindow : Window
             {
                 "openai"    => "https://api.openai.com/v1/chat/completions",
                 "anthropic" => "https://api.anthropic.com/v1/messages",
-                "kimi"      => "https://api.moonshot.ai/v1/chat/completions",
+                "kimi"      => "https://api.k2.6.ai/v1/chat/completions",
                 "local"     => "http://localhost:11434/v1/chat/completions",
                 _           => string.Empty, // azure-openai / custom need an explicit endpoint
             };
