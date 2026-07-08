@@ -1,0 +1,323 @@
+<UserControl x:Class="NCVizDash.TaskPane.Views.AiReportPaneView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:md="http://materialdesigninxaml.net/winfx/xaml/themes"
+        xmlns:vm="clr-namespace:NCVizDash.TaskPane.ViewModels"
+        mc:Ignorable="d"
+        FontFamily="{md:MaterialDesignFont}"
+        Background="#FAFAFA"
+        d:DesignWidth="380" d:DesignHeight="860"
+        d:DataContext="{d:DesignInstance vm:AiReportPaneViewModel}">
+
+    <UserControl.Resources>
+        <SolidColorBrush x:Key="AiAccent"      Color="#7C3AED" />
+        <SolidColorBrush x:Key="AiAccentSoft"  Color="#C4B5FD" />
+        <SolidColorBrush x:Key="AiInk"         Color="#1F1B2E" />
+        <SolidColorBrush x:Key="AiMuted"       Color="#6B7280" />
+        <SolidColorBrush x:Key="AiCardBorder"  Color="#E5E7EB" />
+
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
+
+        <Style x:Key="ChipButton" TargetType="Button">
+            <Setter Property="Background" Value="#F3F4F6" />
+            <Setter Property="Foreground" Value="{StaticResource AiInk}" />
+            <Setter Property="BorderBrush" Value="{StaticResource AiCardBorder}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="12,7" />
+            <Setter Property="HorizontalAlignment" Value="Left" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="16" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#EDE9FE" />
+                                <Setter Property="BorderBrush" Value="{StaticResource AiAccentSoft}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <DockPanel Margin="0">
+
+        <!-- ── Header: ✦ VizDash ─────────────────── ✕ ── -->
+        <Border DockPanel.Dock="Top" Background="White"
+                BorderBrush="{StaticResource AiCardBorder}" BorderThickness="0,0,0,1"
+                Padding="16,12">
+            <DockPanel>
+                <Button DockPanel.Dock="Right" Command="{Binding CloseCommand}"
+                        Style="{StaticResource MaterialDesignToolButton}"
+                        Padding="4" ToolTip="Close">
+                    <md:PackIcon Kind="Close" Width="18" Height="18"
+                                 Foreground="{StaticResource AiInk}" />
+                </Button>
+                <StackPanel Orientation="Horizontal">
+                    <md:PackIcon Kind="Creation" Width="18" Height="18"
+                                 VerticalAlignment="Center"
+                                 Foreground="{StaticResource AiAccent}" />
+                    <TextBlock Text="VizDash" Margin="8,0,0,0" FontSize="16"
+                               FontWeight="Bold" Foreground="{StaticResource AiAccent}" />
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <!-- ── Footer: Insert / Refine ── -->
+        <Border DockPanel.Dock="Bottom" Background="White"
+                BorderBrush="{StaticResource AiCardBorder}" BorderThickness="0,1,0,0"
+                Padding="16,12">
+            <StackPanel>
+                <Button Command="{Binding InsertIntoWorkbookCommand}"
+                        IsEnabled="{Binding HasDraft}"
+                        Background="{StaticResource AiAccent}"
+                        BorderBrush="{StaticResource AiAccent}"
+                        Foreground="White" Height="38"
+                        md:ButtonAssist.CornerRadius="8"
+                        Style="{StaticResource MaterialDesignRaisedButton}">
+                    <StackPanel Orientation="Horizontal">
+                        <md:PackIcon Kind="TableLargePlus" Width="16" Height="16"
+                                     VerticalAlignment="Center" />
+                        <TextBlock Text="Insert into Workbook" Margin="8,0,0,0" />
+                    </StackPanel>
+                </Button>
+                <Button Command="{Binding RefineDraftCommand}"
+                        IsEnabled="{Binding HasDraft}"
+                        Margin="0,8,0,0" Height="36"
+                        Foreground="{StaticResource AiInk}"
+                        BorderBrush="{StaticResource AiCardBorder}"
+                        md:ButtonAssist.CornerRadius="8"
+                        Style="{StaticResource MaterialDesignOutlinedButton}">
+                    <StackPanel Orientation="Horizontal">
+                        <md:PackIcon Kind="TuneVariant" Width="14" Height="14"
+                                     VerticalAlignment="Center" />
+                        <TextBlock Text="Refine Draft" Margin="8,0,0,0" />
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+        </Border>
+
+        <!-- ── Scrollable body ── -->
+        <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="16,14,16,8">
+            <StackPanel>
+
+                <!-- Prompt card -->
+                <Border Background="White" CornerRadius="10" Padding="12"
+                        BorderBrush="{StaticResource AiCardBorder}" BorderThickness="1">
+                    <StackPanel>
+                        <TextBox Text="{Binding Prompt, UpdateSourceTrigger=PropertyChanged}"
+                                 IsEnabled="{Binding IsIdle}"
+                                 md:HintAssist.Hint="Ask AI to generate a report (e.g., &quot;Monthly sales by region&quot;)."
+                                 Style="{StaticResource MaterialDesignTextBox}"
+                                 BorderThickness="0"
+                                 TextWrapping="Wrap" AcceptsReturn="True"
+                                 MinHeight="52" FontSize="13"
+                                 Foreground="{StaticResource AiInk}" />
+                        <TextBlock Margin="0,8,0,0" FontSize="10.5" TextWrapping="Wrap"
+                                   Foreground="{StaticResource AiMuted}"
+                                   Text="Tip: force a chart type with \bar  \pie  \line  \area  \scatter  \donut  \kpi  \table" />
+                        <Button Command="{Binding GenerateCommand}"
+                                HorizontalAlignment="Right" Margin="0,10,0,0"
+                                Background="{StaticResource AiAccent}"
+                                BorderBrush="{StaticResource AiAccent}"
+                                Foreground="White" Height="32" Padding="14,0"
+                                md:ButtonAssist.CornerRadius="16"
+                                Style="{StaticResource MaterialDesignRaisedButton}">
+                            <StackPanel Orientation="Horizontal">
+                                <md:PackIcon Kind="Creation" Width="14" Height="14"
+                                             VerticalAlignment="Center" />
+                                <TextBlock Text="Generate" Margin="6,0,0,0" FontSize="12" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </Border>
+
+                <!-- Suggested actions -->
+                <TextBlock Text="SUGGESTED ACTIONS" Margin="2,18,0,8"
+                           FontSize="11" FontWeight="SemiBold"
+                           Foreground="{StaticResource AiInk}" />
+                <ItemsControl ItemsSource="{Binding QuickActions}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Button Style="{StaticResource ChipButton}" Margin="0,0,0,8"
+                                    Command="{Binding DataContext.QuickActionCommand,
+                                              RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                    CommandParameter="{Binding}"
+                                    Content="{Binding}" FontSize="12.5" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <!-- Report Preview header + AI DRAFT badge -->
+                <DockPanel Margin="2,14,0,8">
+                    <Border DockPanel.Dock="Right" Background="#F5F3FF"
+                            CornerRadius="10" Padding="8,3"
+                            BorderBrush="{StaticResource AiAccentSoft}" BorderThickness="1">
+                        <StackPanel Orientation="Horizontal">
+                            <md:PackIcon Kind="Creation" Width="11" Height="11"
+                                         VerticalAlignment="Center"
+                                         Foreground="{StaticResource AiAccent}" />
+                            <TextBlock Text="AI DRAFT" Margin="5,0,0,0" FontSize="10"
+                                       FontWeight="SemiBold"
+                                       Foreground="{StaticResource AiAccent}" />
+                        </StackPanel>
+                    </Border>
+                    <TextBlock Text="Report Preview" FontSize="14" FontWeight="Bold"
+                               Foreground="{StaticResource AiInk}" />
+                </DockPanel>
+
+                <!-- Preview card -->
+                <Border Background="White" CornerRadius="12" Padding="14"
+                        BorderBrush="{StaticResource AiCardBorder}" BorderThickness="1"
+                        Visibility="{Binding HasDraft, Converter={StaticResource BoolToVis}}">
+                    <StackPanel>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                            <md:PackIcon Kind="{Binding ChartIconKind}" Width="13" Height="13"
+                                         VerticalAlignment="Center"
+                                         Foreground="{StaticResource AiMuted}" />
+                            <TextBlock Margin="6,0,0,0" FontSize="11"
+                                       Foreground="{StaticResource AiMuted}">
+                                <Run Text="Chart type:" />
+                                <Run Text="{Binding ChartTypeLabel}" FontWeight="SemiBold" />
+                            </TextBlock>
+                        </StackPanel>
+
+                        <!-- Mini bar chart (\bar, \column, or no directive) -->
+                        <Border Background="#F8F7FC" CornerRadius="8" Padding="10,12" Height="140"
+                                Visibility="{Binding IsBarPreview, Converter={StaticResource BoolToVis}}">
+                            <ItemsControl ItemsSource="{Binding PreviewBars}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <UniformGrid Rows="1" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <DockPanel Margin="5,0" LastChildFill="True">
+                                            <TextBlock DockPanel.Dock="Bottom" Text="{Binding Label}"
+                                                       FontSize="9.5" HorizontalAlignment="Center"
+                                                       Margin="0,6,0,0"
+                                                       Foreground="{StaticResource AiMuted}" />
+                                            <Grid>
+                                                <Border VerticalAlignment="Bottom" CornerRadius="4,4,0,0"
+                                                        Height="{Binding Height}">
+                                                    <Border.Style>
+                                                        <Style TargetType="Border">
+                                                            <Setter Property="Background"
+                                                                    Value="{StaticResource AiAccentSoft}" />
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsHighlight}" Value="True">
+                                                                    <Setter Property="Background"
+                                                                            Value="{StaticResource AiAccent}" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Border.Style>
+                                                </Border>
+                                            </Grid>
+                                        </DockPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </Border>
+
+                        <!-- Icon preview (\pie, \line, \scatter, …) -->
+                        <Border Background="#F8F7FC" CornerRadius="8" Height="140">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsBarPreview}" Value="True">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                                <md:PackIcon Kind="{Binding ChartIconKind}" Width="56" Height="56"
+                                             HorizontalAlignment="Center"
+                                             Foreground="{StaticResource AiAccent}" />
+                                <TextBlock Text="{Binding ChartTypeLabel}" Margin="0,8,0,0"
+                                           FontSize="12" FontWeight="SemiBold"
+                                           HorizontalAlignment="Center"
+                                           Foreground="{StaticResource AiMuted}" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Insights -->
+                        <StackPanel Orientation="Horizontal" Margin="0,14,0,6">
+                            <md:PackIcon Kind="InformationOutline" Width="14" Height="14"
+                                         VerticalAlignment="Center"
+                                         Foreground="{StaticResource AiAccent}" />
+                            <TextBlock Text="Insights Detected" Margin="6,0,0,0"
+                                       FontSize="12" FontWeight="SemiBold"
+                                       Foreground="{StaticResource AiAccent}" />
+                        </StackPanel>
+                        <TextBlock Text="{Binding InsightText}" TextWrapping="Wrap"
+                                   FontSize="12.5" LineHeight="19"
+                                   Foreground="{StaticResource AiInk}" />
+
+                        <!-- Stats -->
+                        <Separator Margin="0,12,0,0" Background="{StaticResource AiCardBorder}" />
+                        <DockPanel Margin="0,10,0,0">
+                            <TextBlock DockPanel.Dock="Right" Text="{Binding RowsScanned}"
+                                       FontFamily="Consolas" FontSize="13"
+                                       Foreground="{StaticResource AiInk}" />
+                            <TextBlock Text="Total Rows Scanned" FontSize="12.5"
+                                       Foreground="{StaticResource AiInk}" />
+                        </DockPanel>
+                        <Separator Margin="0,10,0,0" Background="{StaticResource AiCardBorder}" />
+                        <DockPanel Margin="0,10,0,0">
+                            <TextBlock DockPanel.Dock="Right" Text="{Binding ConfidenceScore}"
+                                       FontFamily="Consolas" FontSize="13"
+                                       Foreground="{StaticResource AiInk}" />
+                            <TextBlock Text="Confidence Score" FontSize="12.5"
+                                       Foreground="{StaticResource AiInk}" />
+                        </DockPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- Empty-state placeholder -->
+                <Border Background="White" CornerRadius="12" Padding="24"
+                        BorderBrush="{StaticResource AiCardBorder}" BorderThickness="1">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Setter Property="Visibility" Value="Visible" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding HasDraft}" Value="True">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <TextBlock Text="Ask a question or pick a suggested action to draft your first report."
+                               TextWrapping="Wrap" FontSize="12.5" TextAlignment="Center"
+                               Foreground="{StaticResource AiMuted}" />
+                </Border>
+
+                <StackPanel Orientation="Horizontal" Margin="2,14,0,0">
+                    <md:PackIcon Kind="Connection" Width="12" Height="12"
+                                 VerticalAlignment="Center"
+                                 Foreground="{StaticResource AiMuted}" />
+                    <TextBlock Text="{Binding ConnectionStatus}" Margin="6,0,0,0"
+                               FontSize="10.5" TextWrapping="Wrap"
+                               Foreground="{StaticResource AiMuted}" />
+                </StackPanel>
+
+                <ProgressBar IsIndeterminate="True" Height="3" Margin="0,12,0,0"
+                             Foreground="{StaticResource AiAccent}"
+                             Visibility="{Binding IsGenerating, Converter={StaticResource BoolToVis}}" />
+            </StackPanel>
+        </ScrollViewer>
+    </DockPanel>
+</UserControl>

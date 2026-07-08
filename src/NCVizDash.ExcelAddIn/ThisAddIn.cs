@@ -30,7 +30,9 @@ public sealed partial class ThisAddIn
     private ServiceProvider? _serviceProvider;
     private NCVizDashRibbon? _ribbon;
     private Microsoft.Office.Tools.CustomTaskPane? _taskPane;
+    private Microsoft.Office.Tools.CustomTaskPane? _aiReportPane;
     private ShellView? _shellView;
+    private AiReportPaneView? _aiReportView;
     private ILogger<ThisAddIn>? _logger;
     private System.Timers.Timer? _autoRefreshDebounceTimer;
 
@@ -60,6 +62,7 @@ public sealed partial class ThisAddIn
 
             // ── 4. Create the WPF task pane wrapped in an ElementHost ──
             InitialiseTaskPane();
+            InitialiseAiReportPane();
 
             // ── 5. Wire Excel application events ──
             Application.WorkbookActivate         += OnWorkbookActivate;
@@ -132,6 +135,7 @@ public sealed partial class ThisAddIn
         ribbon.PresentRequested         -= OnPresentRequested;
         ribbon.PopOutRequested          -= OnPopOutRequested;
         ribbon.AiSettingsRequested      -= OnAiSettingsRequested;
+        ribbon.AiReportPaneToggleRequested -= OnAiReportPaneToggleRequested;
 
         ribbon.DataRefreshRequested     += OnDataRefreshRequested;
         ribbon.TaskPaneToggleRequested  += OnTaskPaneToggleRequested;
@@ -144,6 +148,7 @@ public sealed partial class ThisAddIn
         ribbon.PresentRequested        += OnPresentRequested;
         ribbon.AiSettingsRequested     += OnAiSettingsRequested;
         ribbon.PopOutRequested         += OnPopOutRequested;
+        ribbon.AiReportPaneToggleRequested += OnAiReportPaneToggleRequested;
     }
 
     // ── DI composition root ──────────────────────────────────────────────────
@@ -173,6 +178,9 @@ public sealed partial class ThisAddIn
         services.AddSingleton<VisualLibraryViewModel>();
         services.AddSingleton<ShellViewModel>();
         services.AddSingleton<GlobalFilterBarViewModel>();
+
+        // AI Report Generator (standalone assistant pane — separate from the dashboard shell)
+        services.AddSingleton<AiReportPaneViewModel>();
 
         // Task pane shell (constructed manually — not via DI — so ElementHost owns the sole visual tree).
 
@@ -243,6 +251,8 @@ public sealed partial class ThisAddIn
         services.AddSingleton<IAiProvider, NCVizDash.TaskPane.Ai.AzureOpenAiProvider>();
         services.AddSingleton<IAiProvider, NCVizDash.TaskPane.Ai.AnthropicProvider>();
         services.AddSingleton<IAiProvider, NCVizDash.TaskPane.Ai.LocalLlmProvider>();
+        services.AddSingleton<IAiProvider, NCVizDash.TaskPane.Ai.KimiProvider>();
+        services.AddSingleton<IAiProvider, NCVizDash.TaskPane.Ai.CustomOpenAiProvider>();
         services.AddSingleton<NCVizDash.TaskPane.Ai.AiFeatureGate>();
 
         return services.BuildServiceProvider(validateScopes: true);
@@ -289,6 +299,47 @@ public sealed partial class ThisAddIn
         _logger?.LogInformation("Task pane created (hidden).");
     }
 
+    private void InitialiseAiReportPane()
+    {
+        if (_serviceProvider is null || _aiReportPane is not null)
+            return;
+
+        WpfResourceBootstrap.EnsureApplicationResources();
+
+        var viewModel = _serviceProvider.GetRequiredService<AiReportPaneViewModel>();
+
+        _aiReportView = new AiReportPaneView();
+
+        var elementHost = new System.Windows.Forms.Integration.ElementHost
+        {
+            Dock = System.Windows.Forms.DockStyle.Fill,
+            AutoSize = false,
+        };
+
+        var hostControl = new System.Windows.Forms.UserControl
+        {
+            Dock = System.Windows.Forms.DockStyle.Fill,
+        };
+        hostControl.Controls.Add(elementHost);
+
+        // Host first, then bind — same ElementHost caveat as the dashboard shell.
+        elementHost.Child = _aiReportView;
+        _aiReportView.BindViewModel(viewModel);
+
+        _aiReportPane = CustomTaskPanes.Add(hostControl, "VizDash — AI Report");
+        _aiReportPane.Width        = 380;
+        _aiReportPane.DockPosition = Microsoft.Office.Core.MsoCTPDockPosition.msoCTPDockPositionRight;
+        _aiReportPane.Visible      = false;
+
+        // Keep the ribbon toggle in sync when the user closes the pane via its own ✕.
+        _aiReportPane.VisibleChanged += (_, _) =>
+            _ribbon?.SetAiReportPaneVisible(_aiReportPane?.Visible ?? false);
+        viewModel.CloseRequested += (_, _) => SetAiReportPaneVisible(false);
+        viewModel.InsertRequested += OnAiReportInsertRequested;
+
+        _logger?.LogInformation("AI Report pane created (hidden).");
+    }
+
     // ── Event handlers ───────────────────────────────────────────────────────
 
     private void OnTaskPaneToggleRequested(object? sender, bool visible)
@@ -308,6 +359,51 @@ public sealed partial class ThisAddIn
             _taskPane.Visible = visible;
 
         _ribbon?.SetTaskPaneVisible(visible);
+    }
+
+    private void OnAiReportPaneToggleRequested(object? sender, bool visible) =>
+        SetAiReportPaneVisible(visible);
+
+    private void SetAiReportPaneVisible(bool visible)
+    {
+        if (_aiReportPane is not null)
+            _aiReportPane.Visible = visible;
+
+        _ribbon?.SetAiReportPaneVisible(visible);
+    }
+
+    private void OnAiReportInsertRequested(object? sender, string prompt)
+    {
+        // Phase 1: land the draft on a new worksheet stub. Later phases will
+        // materialise the previewed chart + insight table via the chart engine.
+        try
+        {
+            var wb = Application.ActiveWorkbook;
+            if (wb is null) return;
+
+            var sheet = (Microsoft.Office.Interop.Excel.Worksheet)wb.Worksheets.Add();
+            sheet.Name = GetUniqueSheetName(wb, "AI Report");
+            sheet.Cells[1, 1] = "VizDash AI Report";
+            sheet.Cells[2, 1] = $"Prompt: {prompt}";
+            _logger?.LogInformation("AI report inserted into sheet '{Sheet}'.", sheet.Name);
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex, "Failed to insert AI report into workbook.");
+        }
+    }
+
+    private static string GetUniqueSheetName(
+        Microsoft.Office.Interop.Excel.Workbook wb, string baseName)
+    {
+        var existing = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (Microsoft.Office.Interop.Excel.Worksheet ws in wb.Worksheets)
+            existing.Add(ws.Name);
+
+        if (!existing.Contains(baseName)) return baseName;
+        for (var i = 2; ; i++)
+            if (!existing.Contains($"{baseName} {i}"))
+                return $"{baseName} {i}";
     }
 
     private void OnDataRefreshRequested(object? sender, EventArgs e)

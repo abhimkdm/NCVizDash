@@ -77,7 +77,9 @@ public sealed class AnthropicProvider : IAiProvider
     {
         var requestBody = JsonSerializer.Serialize(new
         {
-            model = "claude-sonnet-4-6",
+            model = string.IsNullOrWhiteSpace(_settings.Settings.AiModel)
+                ? "claude-sonnet-4-6"
+                : _settings.Settings.AiModel.Trim(),
             max_tokens = 300,
             messages = new[] { new { role = "user", content = prompt } }
         });

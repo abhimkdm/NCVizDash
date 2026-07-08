@@ -6,7 +6,7 @@
         xmlns:md="http://materialdesigninxaml.net/winfx/xaml/themes"
         mc:Ignorable="d"
         Title="AI Settings"
-        Width="480" Height="440"
+        Width="480" Height="560"
         WindowStartupLocation="CenterScreen"
         Background="{DynamicResource MaterialDesignBackground}">
 
@@ -23,13 +23,28 @@
             <ComboBoxItem Content="OpenAI" Tag="openai" />
             <ComboBoxItem Content="Azure OpenAI" Tag="azure-openai" />
             <ComboBoxItem Content="Anthropic" Tag="anthropic" />
+            <ComboBoxItem Content="Kimi (Moonshot AI)" Tag="kimi" />
             <ComboBoxItem Content="Local (Ollama / LM Studio)" Tag="local" />
+            <ComboBoxItem Content="Other (OpenAI-compatible)" Tag="custom" />
         </ComboBox>
+        <TextBlock x:Name="OllamaHintText" TextWrapping="Wrap" FontSize="11" Margin="0,-10,0,12"
+                   Foreground="{DynamicResource MaterialDesignBodyLight}" Visibility="Collapsed"
+                   Text="Ollama: run 'ollama serve' and pull a model (e.g. 'ollama pull llama3.1'). No API key needed — leave it blank." />
+        <TextBlock x:Name="KimiHintText" TextWrapping="Wrap" FontSize="11" Margin="0,-10,0,12"
+                   Foreground="{DynamicResource MaterialDesignBodyLight}" Visibility="Collapsed"
+                   Text="Kimi: create an API key at platform.moonshot.ai and paste it below. Models: moonshot-v1-8k, kimi-k2 family. CN-region accounts: set the endpoint to https://api.moonshot.cn/v1/chat/completions." />
+        <TextBlock x:Name="CustomHintText" TextWrapping="Wrap" FontSize="11" Margin="0,-10,0,12"
+                   Foreground="{DynamicResource MaterialDesignBodyLight}" Visibility="Collapsed"
+                   Text="Other providers (DeepSeek, Groq, Mistral, OpenRouter, vLLM, …): paste the full chat-completions URL as the endpoint, the model name, and your key. The key is sent as a Bearer token." />
 
         <TextBlock Text="Endpoint" FontWeight="SemiBold" Margin="0,0,0,4" />
         <TextBlock Text="Required for Azure OpenAI and Local; ignored for OpenAI/Anthropic's default endpoints."
                    FontSize="11" Foreground="{DynamicResource MaterialDesignBodyLight}" Margin="0,0,0,4" />
         <TextBox x:Name="EndpointTextBox" md:HintAssist.Hint="e.g. https://your-resource.openai.azure.com" Margin="0,0,0,16" />
+
+        <TextBlock Text="Model" FontWeight="SemiBold" Margin="0,0,0,4" />
+        <TextBox x:Name="ModelTextBox" Margin="0,0,0,16"
+                 md:HintAssist.Hint="e.g. gpt-4o-mini · claude-sonnet-4-6 · llama3.1 (Ollama)" />
 
         <TextBlock Text="API Key" FontWeight="SemiBold" Margin="0,0,0,4" />
         <PasswordBox x:Name="ApiKeyPasswordBox" Margin="0,0,0,8" />
@@ -39,6 +54,8 @@
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
             <TextBlock x:Name="StatusText" VerticalAlignment="Center" Margin="0,0,16,0"
                        Foreground="{DynamicResource MaterialDesignBodyLight}" FontSize="11" />
+            <Button x:Name="TestButton" Content="Test Connection" Click="TestButton_Click"
+                    Style="{StaticResource MaterialDesignOutlinedButton}" Margin="0,0,8,0" />
             <Button Content="Cancel" Click="CancelButton_Click" Style="{StaticResource MaterialDesignFlatButton}" Margin="0,0,8,0" />
             <Button Content="Save" Click="SaveButton_Click" Style="{StaticResource MaterialDesignRaisedButton}" />
         </StackPanel>

@@ -55,4 +55,11 @@ public sealed class AppSettings
     /// for this phase but not a production-grade secret-storage choice.
     /// </summary>
     public string AiApiKey { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Model name for the selected provider — e.g. "gpt-4o-mini" (OpenAI),
+    /// "claude-sonnet-4-6" (Anthropic), or "llama3.1" / "mistral" for local
+    /// Ollama models. Empty means "use the provider's built-in default".
+    /// </summary>
+    public string AiModel { get; set; } = string.Empty;
 }

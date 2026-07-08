@@ -25,6 +25,14 @@ public abstract class OpenAiCompatibleProvider : IAiProvider
 
     /// <inheritdoc/>
     public abstract string ProviderId { get; }
+
+    /// <summary>Fallback model when <see cref="AppSettings.AiModel"/> is empty.</summary>
+    protected virtual string DefaultModel => "gpt-4o-mini";
+
+    /// <summary>The model actually sent in requests: user-configured, else the provider default.</summary>
+    protected string Model => string.IsNullOrWhiteSpace(Settings.Settings.AiModel)
+        ? DefaultModel
+        : Settings.Settings.AiModel.Trim();
     /// <summary>Chat-completions endpoint URL for this provider.</summary>
     protected abstract string Endpoint { get; }
     /// <summary>Applies provider-specific authentication headers to the request.</summary>
@@ -99,7 +107,7 @@ public abstract class OpenAiCompatibleProvider : IAiProvider
     {
         var requestBody = JsonSerializer.Serialize(new
         {
-            model = "gpt-4o-mini",
+            model = Model,
             messages = new[] { new { role = "user", content = prompt } },
             max_tokens = 300
         });
@@ -152,12 +160,56 @@ public sealed class AzureOpenAiProvider(HttpClient httpClient, IAppSettingsProvi
         request.Headers.Add("api-key", Settings.Settings.AiApiKey);
 }
 
+/// <summary>
+/// Kimi by Moonshot AI — OpenAI-compatible chat completions with Bearer-key auth.
+/// Get a key at https://platform.moonshot.ai; models include "moonshot-v1-8k" and
+/// the "kimi-k2-*" family (set the exact model in Settings → AI → Model).
+/// </summary>
+public sealed class KimiProvider(HttpClient httpClient, IAppSettingsProvider settings, ILogger<KimiProvider> logger)
+    : OpenAiCompatibleProvider(httpClient, settings, logger)
+{
+    /// <inheritdoc/>
+    public override string ProviderId => "kimi";
+    /// <inheritdoc/>
+    protected override string DefaultModel => "moonshot-v1-8k";
+    /// <inheritdoc/>
+    protected override string Endpoint => string.IsNullOrWhiteSpace(Settings.Settings.AiEndpoint)
+        ? "https://api.moonshot.ai/v1/chat/completions" // use https://api.moonshot.cn/... for the CN region
+        : Settings.Settings.AiEndpoint;
+    /// <inheritdoc/>
+    protected override void ApplyAuth(HttpRequestMessage request) =>
+        request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Settings.Settings.AiApiKey);
+}
+
+/// <summary>
+/// Any other OpenAI-compatible provider (DeepSeek, Groq, Mistral, OpenRouter,
+/// vLLM, …). The user supplies the full chat-completions endpoint and model;
+/// the API key is sent as a Bearer token when provided.
+/// </summary>
+public sealed class CustomOpenAiProvider(HttpClient httpClient, IAppSettingsProvider settings, ILogger<CustomOpenAiProvider> logger)
+    : OpenAiCompatibleProvider(httpClient, settings, logger)
+{
+    /// <inheritdoc/>
+    public override string ProviderId => "custom";
+    /// <inheritdoc/>
+    protected override string Endpoint => Settings.Settings.AiEndpoint; // required — no guessable default
+    /// <inheritdoc/>
+    protected override void ApplyAuth(HttpRequestMessage request)
+    {
+        if (!string.IsNullOrWhiteSpace(Settings.Settings.AiApiKey))
+            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Settings.Settings.AiApiKey);
+    }
+}
+
 /// <summary>A local LLM server exposing an OpenAI-compatible endpoint (Ollama, LM Studio, etc.).</summary>
 public sealed class LocalLlmProvider(HttpClient httpClient, IAppSettingsProvider settings, ILogger<LocalLlmProvider> logger)
     : OpenAiCompatibleProvider(httpClient, settings, logger)
 {
     /// <inheritdoc/>
     public override string ProviderId => "local";
+
+    /// <inheritdoc/>
+    protected override string DefaultModel => "llama3.1"; // common Ollama default; override in Settings → AI
     /// <inheritdoc/>
     protected override string Endpoint => string.IsNullOrWhiteSpace(Settings.Settings.AiEndpoint)
         ? "http://localhost:11434/v1/chat/completions" // Ollama's default OpenAI-compatible port
