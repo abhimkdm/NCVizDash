@@ -22,8 +22,8 @@
 
         <Style x:Key="ChipButton" TargetType="Button">
             <Setter Property="Background" Value="#F3F4F6" />
-            <Setter Property="Foreground" Value="{StaticResource AiInk}" />
-            <Setter Property="BorderBrush" Value="{StaticResource AiCardBorder}" />
+            <Setter Property="Foreground" Value="{DynamicResource AiInk}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource AiCardBorder}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="Padding" Value="12,7" />
             <Setter Property="HorizontalAlignment" Value="Left" />
@@ -40,8 +40,48 @@
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter Property="Background" Value="#EDE9FE" />
-                                <Setter Property="BorderBrush" Value="{StaticResource AiAccentSoft}" />
+                                <Setter Property="BorderBrush" Value="{DynamicResource AiAccentSoft}" />
                             </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Chart-type icon button: square, highlights when its option is selected. -->
+        <Style x:Key="ChartTypeIconButton" TargetType="Button">
+            <Setter Property="Width" Value="40" />
+            <Setter Property="Height" Value="40" />
+            <Setter Property="Margin" Value="0,0,6,6" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Background" Value="#F3F4F6" />
+            <Setter Property="BorderBrush" Value="{DynamicResource AiCardBorder}" />
+            <Setter Property="Foreground" Value="{DynamicResource AiInk}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="1" CornerRadius="8">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <!-- Selected state, driven by the bound option's IsSelected. -->
+                            <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource AiAccent}" />
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource AiAccent}" />
+                                <Setter Property="Foreground" Value="White" />
+                            </DataTrigger>
+                            <MultiTrigger>
+                                <MultiTrigger.Conditions>
+                                    <Condition Property="IsMouseOver" Value="True" />
+                                    <Condition Binding="{Binding IsSelected}" Value="False" />
+                                </MultiTrigger.Conditions>
+                                <Setter TargetName="Bd" Property="Background" Value="#EDE9FE" />
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource AiAccentSoft}" />
+                            </MultiTrigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
@@ -53,34 +93,34 @@
 
         <!-- ── Header: ✦ VizDash ─────────────────── ✕ ── -->
         <Border DockPanel.Dock="Top" Background="White"
-                BorderBrush="{StaticResource AiCardBorder}" BorderThickness="0,0,0,1"
+                BorderBrush="{DynamicResource AiCardBorder}" BorderThickness="0,0,0,1"
                 Padding="16,12">
             <DockPanel>
                 <Button DockPanel.Dock="Right" Command="{Binding CloseCommand}"
                         Style="{StaticResource MaterialDesignToolButton}"
                         Padding="4" ToolTip="Close">
                     <md:PackIcon Kind="Close" Width="18" Height="18"
-                                 Foreground="{StaticResource AiInk}" />
+                                 Foreground="{DynamicResource AiInk}" />
                 </Button>
                 <StackPanel Orientation="Horizontal">
                     <md:PackIcon Kind="Creation" Width="18" Height="18"
                                  VerticalAlignment="Center"
-                                 Foreground="{StaticResource AiAccent}" />
+                                 Foreground="{DynamicResource AiAccent}" />
                     <TextBlock Text="VizDash" Margin="8,0,0,0" FontSize="16"
-                               FontWeight="Bold" Foreground="{StaticResource AiAccent}" />
+                               FontWeight="Bold" Foreground="{DynamicResource AiAccent}" />
                 </StackPanel>
             </DockPanel>
         </Border>
 
         <!-- ── Footer: Insert / Refine ── -->
         <Border DockPanel.Dock="Bottom" Background="White"
-                BorderBrush="{StaticResource AiCardBorder}" BorderThickness="0,1,0,0"
+                BorderBrush="{DynamicResource AiCardBorder}" BorderThickness="0,1,0,0"
                 Padding="16,12">
             <StackPanel>
                 <Button Command="{Binding InsertIntoWorkbookCommand}"
                         IsEnabled="{Binding HasDraft}"
-                        Background="{StaticResource AiAccent}"
-                        BorderBrush="{StaticResource AiAccent}"
+                        Background="{DynamicResource AiAccent}"
+                        BorderBrush="{DynamicResource AiAccent}"
                         Foreground="White" Height="38"
                         md:ButtonAssist.CornerRadius="8"
                         Style="{StaticResource MaterialDesignRaisedButton}">
@@ -93,8 +133,8 @@
                 <Button Command="{Binding CopyChartForEmailCommand}"
                         IsEnabled="{Binding HasDraft}"
                         Margin="0,8,0,0" Height="36"
-                        Foreground="{StaticResource AiInk}"
-                        BorderBrush="{StaticResource AiCardBorder}"
+                        Foreground="{DynamicResource AiInk}"
+                        BorderBrush="{DynamicResource AiCardBorder}"
                         md:ButtonAssist.CornerRadius="8"
                         ToolTip="Copies just the chart image — paste it straight into an email or chat."
                         Style="{StaticResource MaterialDesignOutlinedButton}">
@@ -107,8 +147,8 @@
                 <Button Command="{Binding RefineDraftCommand}"
                         IsEnabled="{Binding HasDraft}"
                         Margin="0,8,0,0" Height="36"
-                        Foreground="{StaticResource AiInk}"
-                        BorderBrush="{StaticResource AiCardBorder}"
+                        Foreground="{DynamicResource AiInk}"
+                        BorderBrush="{DynamicResource AiCardBorder}"
                         md:ButtonAssist.CornerRadius="8"
                         Style="{StaticResource MaterialDesignOutlinedButton}">
                     <StackPanel Orientation="Horizontal">
@@ -126,7 +166,7 @@
 
                 <!-- Prompt card -->
                 <Border Background="White" CornerRadius="10" Padding="12"
-                        BorderBrush="{StaticResource AiCardBorder}" BorderThickness="1">
+                        BorderBrush="{DynamicResource AiCardBorder}" BorderThickness="1">
                     <StackPanel>
                         <TextBox Text="{Binding Prompt, UpdateSourceTrigger=PropertyChanged}"
                                  IsEnabled="{Binding IsIdle}"
@@ -135,14 +175,11 @@
                                  BorderThickness="0"
                                  TextWrapping="Wrap" AcceptsReturn="True"
                                  MinHeight="52" FontSize="13"
-                                 Foreground="{StaticResource AiInk}" />
-                        <TextBlock Margin="0,8,0,0" FontSize="10.5" TextWrapping="Wrap"
-                                   Foreground="{StaticResource AiMuted}"
-                                   Text="Tip: force a chart type with \bar  \pie  \line  \area  \scatter  \donut  \kpi  \table" />
+                                 Foreground="{DynamicResource AiInk}" />
                         <Button Command="{Binding GenerateCommand}"
                                 HorizontalAlignment="Right" Margin="0,10,0,0"
-                                Background="{StaticResource AiAccent}"
-                                BorderBrush="{StaticResource AiAccent}"
+                                Background="{DynamicResource AiAccent}"
+                                BorderBrush="{DynamicResource AiAccent}"
                                 Foreground="White" Height="32" Padding="14,0"
                                 md:ButtonAssist.CornerRadius="16"
                                 Style="{StaticResource MaterialDesignRaisedButton}">
@@ -158,7 +195,7 @@
                 <!-- Suggested actions -->
                 <TextBlock Text="SUGGESTED ACTIONS" Margin="2,18,0,8"
                            FontSize="11" FontWeight="SemiBold"
-                           Foreground="{StaticResource AiInk}" />
+                           Foreground="{DynamicResource AiInk}" />
                 <ItemsControl ItemsSource="{Binding QuickActions}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
@@ -175,32 +212,52 @@
                 <DockPanel Margin="2,14,0,8">
                     <Border DockPanel.Dock="Right" Background="#F5F3FF"
                             CornerRadius="10" Padding="8,3"
-                            BorderBrush="{StaticResource AiAccentSoft}" BorderThickness="1">
+                            BorderBrush="{DynamicResource AiAccentSoft}" BorderThickness="1">
                         <StackPanel Orientation="Horizontal">
                             <md:PackIcon Kind="Creation" Width="11" Height="11"
                                          VerticalAlignment="Center"
-                                         Foreground="{StaticResource AiAccent}" />
+                                         Foreground="{DynamicResource AiAccent}" />
                             <TextBlock Text="AI DRAFT" Margin="5,0,0,0" FontSize="10"
                                        FontWeight="SemiBold"
-                                       Foreground="{StaticResource AiAccent}" />
+                                       Foreground="{DynamicResource AiAccent}" />
                         </StackPanel>
                     </Border>
                     <TextBlock Text="Report Preview" FontSize="14" FontWeight="Bold"
-                               Foreground="{StaticResource AiInk}" />
+                               Foreground="{DynamicResource AiInk}" />
                 </DockPanel>
+
+                <!-- Chart-type picker: click an icon to re-render the current data in that type -->
+                <ItemsControl ItemsSource="{Binding ChartTypes}" Margin="1,0,0,10">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel Orientation="Horizontal" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Button Style="{StaticResource ChartTypeIconButton}"
+                                    ToolTip="{Binding Label}"
+                                    Command="{Binding DataContext.SelectChartTypeCommand,
+                                              RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                    CommandParameter="{Binding Kind}">
+                                <md:PackIcon Kind="{Binding Icon}" Width="20" Height="20" />
+                            </Button>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
 
                 <!-- Preview card -->
                 <Border Background="White" CornerRadius="12" Padding="14"
-                        BorderBrush="{StaticResource AiCardBorder}" BorderThickness="1"
+                        BorderBrush="{DynamicResource AiCardBorder}" BorderThickness="1"
                         Visibility="{Binding HasDraft, Converter={StaticResource BoolToVis}}">
                     <StackPanel>
 
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
                             <md:PackIcon Kind="{Binding ChartIconKind}" Width="13" Height="13"
                                          VerticalAlignment="Center"
-                                         Foreground="{StaticResource AiMuted}" />
+                                         Foreground="{DynamicResource AiMuted}" />
                             <TextBlock Margin="6,0,0,0" FontSize="11"
-                                       Foreground="{StaticResource AiMuted}">
+                                       Foreground="{DynamicResource AiMuted}">
                                 <Run Text="Chart type:" />
                                 <Run Text="{Binding ChartTypeLabel}" FontWeight="SemiBold" />
                             </TextBlock>
@@ -221,18 +278,18 @@
                                             <TextBlock DockPanel.Dock="Bottom" Text="{Binding Label}"
                                                        FontSize="9.5" HorizontalAlignment="Center"
                                                        Margin="0,6,0,0"
-                                                       Foreground="{StaticResource AiMuted}" />
+                                                       Foreground="{DynamicResource AiMuted}" />
                                             <Grid>
                                                 <Border VerticalAlignment="Bottom" CornerRadius="4,4,0,0"
                                                         Height="{Binding Height}">
                                                     <Border.Style>
                                                         <Style TargetType="Border">
                                                             <Setter Property="Background"
-                                                                    Value="{StaticResource AiAccentSoft}" />
+                                                                    Value="{DynamicResource AiAccentSoft}" />
                                                             <Style.Triggers>
                                                                 <DataTrigger Binding="{Binding IsHighlight}" Value="True">
                                                                     <Setter Property="Background"
-                                                                            Value="{StaticResource AiAccent}" />
+                                                                            Value="{DynamicResource AiAccent}" />
                                                                 </DataTrigger>
                                                             </Style.Triggers>
                                                         </Style>
@@ -260,11 +317,11 @@
                             <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
                                 <md:PackIcon Kind="{Binding ChartIconKind}" Width="56" Height="56"
                                              HorizontalAlignment="Center"
-                                             Foreground="{StaticResource AiAccent}" />
+                                             Foreground="{DynamicResource AiAccent}" />
                                 <TextBlock Text="{Binding ChartTypeLabel}" Margin="0,8,0,0"
                                            FontSize="12" FontWeight="SemiBold"
                                            HorizontalAlignment="Center"
-                                           Foreground="{StaticResource AiMuted}" />
+                                           Foreground="{DynamicResource AiMuted}" />
                             </StackPanel>
                         </Border>
 
@@ -272,38 +329,38 @@
                         <StackPanel Orientation="Horizontal" Margin="0,14,0,6">
                             <md:PackIcon Kind="InformationOutline" Width="14" Height="14"
                                          VerticalAlignment="Center"
-                                         Foreground="{StaticResource AiAccent}" />
+                                         Foreground="{DynamicResource AiAccent}" />
                             <TextBlock Text="Insights Detected" Margin="6,0,0,0"
                                        FontSize="12" FontWeight="SemiBold"
-                                       Foreground="{StaticResource AiAccent}" />
+                                       Foreground="{DynamicResource AiAccent}" />
                         </StackPanel>
                         <TextBlock Text="{Binding InsightText}" TextWrapping="Wrap"
                                    FontSize="12.5" LineHeight="19"
-                                   Foreground="{StaticResource AiInk}" />
+                                   Foreground="{DynamicResource AiInk}" />
 
                         <!-- Stats -->
-                        <Separator Margin="0,12,0,0" Background="{StaticResource AiCardBorder}" />
+                        <Separator Margin="0,12,0,0" Background="{DynamicResource AiCardBorder}" />
                         <DockPanel Margin="0,10,0,0">
                             <TextBlock DockPanel.Dock="Right" Text="{Binding RowsScanned}"
                                        FontFamily="Consolas" FontSize="13"
-                                       Foreground="{StaticResource AiInk}" />
+                                       Foreground="{DynamicResource AiInk}" />
                             <TextBlock Text="Total Rows Scanned" FontSize="12.5"
-                                       Foreground="{StaticResource AiInk}" />
+                                       Foreground="{DynamicResource AiInk}" />
                         </DockPanel>
-                        <Separator Margin="0,10,0,0" Background="{StaticResource AiCardBorder}" />
+                        <Separator Margin="0,10,0,0" Background="{DynamicResource AiCardBorder}" />
                         <DockPanel Margin="0,10,0,0">
                             <TextBlock DockPanel.Dock="Right" Text="{Binding ConfidenceScore}"
                                        FontFamily="Consolas" FontSize="13"
-                                       Foreground="{StaticResource AiInk}" />
+                                       Foreground="{DynamicResource AiInk}" />
                             <TextBlock Text="Confidence Score" FontSize="12.5"
-                                       Foreground="{StaticResource AiInk}" />
+                                       Foreground="{DynamicResource AiInk}" />
                         </DockPanel>
                     </StackPanel>
                 </Border>
 
                 <!-- Empty-state placeholder -->
                 <Border Background="White" CornerRadius="12" Padding="24"
-                        BorderBrush="{StaticResource AiCardBorder}" BorderThickness="1">
+                        BorderBrush="{DynamicResource AiCardBorder}" BorderThickness="1">
                     <Border.Style>
                         <Style TargetType="Border">
                             <Setter Property="Visibility" Value="Visible" />
@@ -316,20 +373,20 @@
                     </Border.Style>
                     <TextBlock Text="Ask a question or pick a suggested action to draft your first report."
                                TextWrapping="Wrap" FontSize="12.5" TextAlignment="Center"
-                               Foreground="{StaticResource AiMuted}" />
+                               Foreground="{DynamicResource AiMuted}" />
                 </Border>
 
                 <StackPanel Orientation="Horizontal" Margin="2,14,0,0">
                     <md:PackIcon Kind="Connection" Width="12" Height="12"
                                  VerticalAlignment="Center"
-                                 Foreground="{StaticResource AiMuted}" />
+                                 Foreground="{DynamicResource AiMuted}" />
                     <TextBlock Text="{Binding ConnectionStatus}" Margin="6,0,0,0"
                                FontSize="10.5" TextWrapping="Wrap"
-                               Foreground="{StaticResource AiMuted}" />
+                               Foreground="{DynamicResource AiMuted}" />
                 </StackPanel>
 
                 <ProgressBar IsIndeterminate="True" Height="3" Margin="0,12,0,0"
-                             Foreground="{StaticResource AiAccent}"
+                             Foreground="{DynamicResource AiAccent}"
                              Visibility="{Binding IsGenerating, Converter={StaticResource BoolToVis}}" />
             </StackPanel>
         </ScrollViewer>
